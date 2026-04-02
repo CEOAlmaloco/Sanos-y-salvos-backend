@@ -12,4 +12,99 @@ APIs REST, JWT, Docker y BD por servicio.
 - Docker Desktop 
 ## Configuración local
 
-## Git y ramas
+## Estrategia de ramas
+
+El proyecto usa un flujo de trabajo ambientado en multiples entornos:
+
+### Ramas principales
+
+- `main`: Producción (codigo éstable)
+- `staging`: Pre-producción (validación final antes de producción)
+- `qa`: Testing(pruebas funcionales)
+- `develop`: Desarrollo
+
+### Ramas de trabajo
+
+Todas las ramas de trabajo se crearan desde `develop`:
+- `feature/nombre-feature`: nuevas funcionalidades
+- `fix/nombre-bug`: corrección de errores
+- `chore/nombre-tarea`: tareas técnicas
+
+#### Ejemplos:
+
+- `feature/pet-report`
+- `fix/register-error`
+- `chore/update-deps`
+
+## Flujo de Trabajo
+
+### 1. Desarrollo
+```bash
+git checkout develop
+git pull origin develop
+git checkout -b feature/nueva-funcionalidad
+```
+### 2. Integración
+- Pull Request: `feature/*` -> `develop`
+- Revisión obligatoria
+### 3. Testing (QA)
+- Pull Request: `develop` -> `qa`
+- Se realizan pruebas funcionales
+### 4. Pre-producción
+- Pull Request: `qa` -> `staging`
+- Validación final (bugs críticos, configuración, rendimiento básico)
+### 5. Producción
+- Pull Request: `staging` -> `main`
+- Código estable listo para deploy
+
+## Convención de Commits
+
+
+Se utilizaran **Conventional Commits** para estructurar los mensajes de Commit en Git. Esto permitira que sean faciles de leer para el Desarrollador.
+
+### Formato
+```bash
+tipo: descripción
+```
+
+### Tipos
+- `feat`: nueva funcionalidad
+- `fix`: corrección de bug
+- `chore`: tareas internas
+- `docs`: documentación
+- `refactor`: mejora de código
+
+#### Ejemplos:
+- `feat: add pet report creation`
+- `fix: resolve authentication error`
+- `docs: update git workflow`
+
+## 🔒 Protección de ramas
+### `main`
+- Pull Request obligatorio
+- mínimo 1 aprobación
+- sin push directo
+  
+### `staging`
+- Pull Request obligatorio
+- mínimo 1 aprobación
+  
+### `qa`
+- Pull Request obligatorio
+- mínimo 1 aprobación
+  
+### `develop`
+- Pull Request obligatorio (recomendado)
+  
+## 📋 Checklist de Pull Request
+- Código probado
+- No rompe funcionalidades existentes
+- Sigue convención de commits
+- PR revisado por al menos 1 integrante
+- Rama actualizada con la base
+  
+## 🎯 Buenas prácticas
+- No trabajar directamente en ramas principales
+- Mantener PR pequeños y claros
+- Hacer commits descriptivos
+- Eliminar ramas después del merge
