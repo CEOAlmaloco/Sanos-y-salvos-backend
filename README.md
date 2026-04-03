@@ -4,11 +4,36 @@ APIs REST, JWT, Docker y BD por servicio.
 
 ## Estructura prevista
 
+Monorepo Maven (POM padre + módulos):
+
+```text
+Sanos-y-salvos-backend/
+├── pom.xml                 ← POM padre (Spring Boot 4.0.5, Java 21)
+├── msvc-usuario/
+├── msvc-mascota/
+├── msvc-reporte/
+├── msvc-media/
+├── README.md
+└── ...
+```
+
+| Componente | Versión |
+| ------------ | ------- |
+| Spring Boot | 4.0.5 |
+| Java | 21 |
+| Spring Cloud BOM | 2025.1.0 |
+
+```bash
+mvn clean verify
+mvn -pl msvc-usuario spring-boot:run
+```
+
+Puertos por defecto: usuario **8081**, mascota **8082**, reporte **8083**, media **8084**.
 
 ## Requisitos
 
-- JDK 17 o 21 
-- Maven o Gradle 
+- JDK 17 o 21 (monorepo configurado en **21**)
+- Maven o Gradle
 - Docker Desktop 
 ## Configuración local
 
