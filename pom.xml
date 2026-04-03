@@ -20,10 +20,7 @@
     <description>Monorepo backend Sanos y Salvos — microservicios</description>
 
     <modules>
-        <module>msvc-usuario</module>
-        <module>msvc-mascota</module>
-        <module>msvc-reporte</module>
-        <module>msvc-media</module>
+        <module>msvc-user</module>
     </modules>
 
     <properties>
