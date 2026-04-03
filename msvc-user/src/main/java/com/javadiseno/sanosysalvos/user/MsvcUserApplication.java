@@ -8,7 +8,10 @@ import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 public class MsvcUserApplication {
 
 	public static void main(String[] args) {
+
 		SpringApplication.run(MsvcUserApplication.class, args);
+
+		System.out.println("Msvc User Application Started");
 	}
 
 }

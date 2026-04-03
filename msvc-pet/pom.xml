@@ -9,9 +9,9 @@
 		<version>1.0.0</version>
 	</parent>
 
-	<artifactId>msvc-user</artifactId>
-	<name>msvc-user</name>
-	<description>User Service — Sanos y Salvos</description>
+	<artifactId>msvc-pet</artifactId>
+	<name>msvc-pet</name>
+	<description>Pet Service - Sanos y Salvos</description>
 
 	<version>0.0.1-SNAPSHOT</version>
 
@@ -35,12 +35,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
-<!-- ⚠️ DEPENDENCIA DE POSTGRESQL PARA FUTURO -->
-<!--		<dependency>-->
-<!--			<groupId>org.postgresql</groupId>-->
-<!--			<artifactId>postgresql</artifactId>-->
-<!--			<scope>runtime</scope>-->
-<!--		</dependency>-->
+		<!-- ⚠️ DEPENDENCIA DE POSTGRESQL PARA FUTURO -->
+		<!--		<dependency>-->
+		<!--			<groupId>org.postgresql</groupId>-->
+		<!--			<artifactId>postgresql</artifactId>-->
+		<!--			<scope>runtime</scope>-->
+		<!--		</dependency>-->
 
 		<!-- ⚠️ H2 TEMPORAL PARA PRUEBAS -->
 		<dependency>

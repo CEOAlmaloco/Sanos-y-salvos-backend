@@ -21,6 +21,9 @@
 
     <modules>
         <module>msvc-user</module>
+        <module>msvc-report</module>
+        <module>msvc-pet</module>
+        <module>msvc-media</module>
     </modules>
 
     <properties>
