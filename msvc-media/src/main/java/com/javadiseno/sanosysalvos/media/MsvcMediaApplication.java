@@ -9,4 +9,5 @@ public class MsvcMediaApplication {
     public static void main(String[] args) {
         SpringApplication.run(MsvcMediaApplication.class, args);
     }
+
 }
