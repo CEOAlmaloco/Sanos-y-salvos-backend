@@ -19,12 +19,16 @@
     <name>sanos-y-salvos-parent</name>
     <description>Monorepo backend Sanos y Salvos — microservicios</description>
 
+    <!-- Microservicios -->
     <modules>
         <module>msvc-user</module>
         <module>msvc-report</module>
         <module>msvc-pet</module>
         <module>msvc-media</module>
         <module>msvc-integration</module>
+        <module>msvc-matching</module>
+        <module>msvc-notification</module>
+        <module>msvc-analytics</module>
     </modules>
 
     <properties>
@@ -35,6 +39,7 @@
         <jjwt.version>0.13.0</jjwt.version>
         <aws.sdk.version>2.25.15</aws.sdk.version>
         <springdoc.version>2.5.0</springdoc.version>
+        <jackson.version>2.21.2</jackson.version>
     </properties>
 
     <dependencyManagement>
@@ -54,6 +59,15 @@
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
                 <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Jackson BOM - Serialización -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
