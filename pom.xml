@@ -111,11 +111,13 @@
 
     <!-- DEPENDENCIAS POR DEFECTO EN TODOS LOS MÓDULOS -->
     <dependencies>
+
         <!-- MapStruct: mapeo DTO y Entity en compile-time -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
         </dependency>
+
     </dependencies>
 
     <build>

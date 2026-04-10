@@ -7,7 +7,9 @@ package com.javadiseno.sanosysalvos.user.exception;
  * @author Christián Mesa
  */
 public class PasswordMismatchException extends RuntimeException {
+
     public PasswordMismatchException() {
+        // Se usa `super()` para guardar el mensaje personalizado en la clase padre `RuntimeException`
         super("Las contraseñas no coinciden");
     }
 }

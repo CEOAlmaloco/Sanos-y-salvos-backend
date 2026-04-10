@@ -7,7 +7,7 @@ import lombok.*;
  * SY-2 DTO de entrada para el registro de un nuevo usuario
  *
  * Contiene los datos que el cliente debe enviar.
- * El rol asigna DUENO por defecto al registrarse.
+ * El rol asigna OWNER por defecto al registrarse.
  *
  * @author Christián Mesa
  */

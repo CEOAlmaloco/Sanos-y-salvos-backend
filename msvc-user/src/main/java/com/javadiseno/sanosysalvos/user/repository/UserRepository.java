@@ -23,7 +23,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      * de registrar uno nuevo. Es esencial para evitar la excepción de
      * constraint unique y devuelve un 409 Conflict con mensaje claro.
      *
-     * @param email
+     * @param email correo electronico del usuario
      * @return true/false
      */
     boolean existsByEmail(String email);

@@ -36,6 +36,23 @@ public class GlobalExceptionHandler{
               ));
     }
 
+    // -- 400 Bad Request: Contraseñas ingresadas no coinciden ---------------------------
+
+    @ExceptionHandler(PasswordMismatchException.class)
+    public ResponseEntity<ValidationErrorsResponse> handlePasswordMismatch(PasswordMismatchException ex){
+        Map<String, String> errors = new HashMap<>();
+        errors.put("confirmPassword", ex.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ValidationErrorsResponse(
+                        HttpStatus.BAD_REQUEST.value(),
+                        "Error de coincidencia",
+                        errors,
+                        LocalDateTime.now()
+                ));
+    }
+
     // -- 400 Bad Request: Fallo en la validación @Valid ---------------------------
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

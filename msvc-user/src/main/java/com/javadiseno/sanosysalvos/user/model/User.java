@@ -29,7 +29,7 @@ import java.util.UUID;
 
 @EntityListeners(AuditingEntityListener.class) // Activa @CreatedDate y @LastModifiedDate
 @Entity // Mapear la clase a una tabla de BD.
-@Table(name = "user") // Definir nombre de la tabla.
+@Table(name = "users") // Definir nombre de la tabla.
 @Getter // Genera metodos getter para cada campo de la clase, permitiendo obtener información del objeto.
 @Setter // Genera metodos setter para cada campo de la clase, permitiendo cambiar o establecer informacion del objeto fuera de la clase.
 @NoArgsConstructor // Genera un constructor sin argumentos para la clase User.
@@ -38,7 +38,7 @@ public class User {
 
     // -- Identificador ---------------------
 
-    @Id //Marca el campo 'id' como clave primaria de la tabla 'user'.
+    @Id //Marca el campo 'id' como clave primaria de la tabla 'users'.
     private UUID id;
 
     /**
