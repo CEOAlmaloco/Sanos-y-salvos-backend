@@ -1,18 +1,18 @@
 package com.javadiseno.sanosysalvos.user.service;
 
-import com.javadiseno.sanosysalvos.user.dto.RegisterRequestDTO;
-import com.javadiseno.sanosysalvos.user.dto.UserMapper;
-import com.javadiseno.sanosysalvos.user.dto.UserResponseDTO;
-import com.javadiseno.sanosysalvos.user.exception.EmailAlreadyExistsException;
-import com.javadiseno.sanosysalvos.user.exception.PasswordMismatchException;
+import com.javadiseno.sanosysalvos.user.dto.*;
+import com.javadiseno.sanosysalvos.user.exception.*;
 import com.javadiseno.sanosysalvos.user.model.Role;
 import com.javadiseno.sanosysalvos.user.model.User;
 import com.javadiseno.sanosysalvos.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * SY-2 | SY-3 Implementación de UserService
+ */
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService{
@@ -21,6 +21,7 @@ public class UserServiceImpl implements UserService{
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
+    //SY-2
     @Override
     @Transactional
     public UserResponseDTO register(RegisterRequestDTO registerRequestDTO) {
@@ -42,5 +43,27 @@ public class UserServiceImpl implements UserService{
         User savedUser = userRepository.save(user);
 
         return userMapper.toResponseDTO(savedUser);
+    }
+
+    //SY-3
+    @Override
+    @Transactional(readOnly = true)
+    public LoginResponseDTO login(LoginRequestDTO loginRequestDTO) {
+
+        User user = userRepository.findByEmail(loginRequestDTO.getEmail())
+                .orElseThrow(InvalidCredentialsException::new);
+
+        if (!passwordEncoder.matches(loginRequestDTO.getPassword(), user.getHashPassword())){
+            throw new InvalidCredentialsException();
+        }
+
+        return LoginResponseDTO.builder()
+                .token("Futuro Token")
+                .tokenType("Bearer")
+                .userId(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .build();
     }
 }

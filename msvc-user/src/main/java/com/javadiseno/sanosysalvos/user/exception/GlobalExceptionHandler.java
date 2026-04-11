@@ -15,17 +15,6 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler{
 
-        @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
-      return ResponseEntity
-                          .status(HttpStatus.CONFLICT)
-                          .body(new ErrorResponse(
-                      HttpStatus.CONFLICT.value(),
-                      ex.getMessage(),
-                      LocalDateTime.now()
-              ));
-    }
-
     @ExceptionHandler(PasswordMismatchException.class)
     public ResponseEntity<ValidationErrorsResponse> handlePasswordMismatch(PasswordMismatchException ex){
         Map<String, String> errors = new HashMap<>();
@@ -57,6 +46,28 @@ public class GlobalExceptionHandler{
                         HttpStatus.BAD_REQUEST.value(),
                         "Error de validación en los datos enviados",
                         errors,
+                        LocalDateTime.now()
+                ));
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException ex){
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(
+                        HttpStatus.UNAUTHORIZED.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                ));
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(
+                        HttpStatus.CONFLICT.value(),
+                        ex.getMessage(),
                         LocalDateTime.now()
                 ));
     }
