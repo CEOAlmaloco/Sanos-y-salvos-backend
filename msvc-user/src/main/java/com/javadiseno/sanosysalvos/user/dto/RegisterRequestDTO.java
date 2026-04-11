@@ -3,18 +3,9 @@ package com.javadiseno.sanosysalvos.user.dto;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
-/**
- * SY-2 DTO de entrada para el registro de un nuevo usuario
- *
- * Contiene los datos que el cliente debe enviar.
- * El rol asigna OWNER por defecto al registrarse.
- *
- * @author Christián Mesa
- */
-
-@Data // Genera automáticamente el codigo repetitivo común (getters, setters, etc).
-@NoArgsConstructor // Genera un constructor sin argumentos para la clase RegisterRequestDTO.
-@AllArgsConstructor // Genera un constructor con argumentos para cada campo de la clase RegisterRequestDTO.
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class RegisterRequestDTO {
 
     @NotBlank(message = "El nombre es obligatorio")
@@ -33,7 +24,7 @@ public class RegisterRequestDTO {
     @NotBlank(message = "La contraseña es obligatoria")
     @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
     @Pattern(
-            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$", // Verifica si existe una letra minúscula, mayúscula y un número.
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$",
             message = "La contraseña debe contener al menos una mayúscula, una minúscula y un número"
     )
     private String password;
@@ -42,5 +33,5 @@ public class RegisterRequestDTO {
     private String confirmPassword;
 
     @Size(max = 20, message = "El teléfono no puede superar los 20 caracteres")
-    private String phone;  // Opcional
+    private String phone;
 }
