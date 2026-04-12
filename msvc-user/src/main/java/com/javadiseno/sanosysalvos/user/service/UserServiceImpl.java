@@ -20,6 +20,7 @@ public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final JwtService jwtService;
 
     //SY-2
     @Override
@@ -45,7 +46,7 @@ public class UserServiceImpl implements UserService{
         return userMapper.toResponseDTO(savedUser);
     }
 
-    //SY-3
+    //SY-3 | SY-4
     @Override
     @Transactional(readOnly = true)
     public LoginResponseDTO login(LoginRequestDTO loginRequestDTO) {
@@ -57,8 +58,10 @@ public class UserServiceImpl implements UserService{
             throw new InvalidCredentialsException();
         }
 
+        String token = jwtService.generateToken(user);
+
         return LoginResponseDTO.builder()
-                .token("Futuro Token")
+                .token(token)
                 .tokenType("Bearer")
                 .userId(user.getId())
                 .name(user.getName())
