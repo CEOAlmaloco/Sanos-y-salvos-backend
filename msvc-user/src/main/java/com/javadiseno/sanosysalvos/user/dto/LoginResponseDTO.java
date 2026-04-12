@@ -6,7 +6,7 @@ import lombok.*;
 import java.util.UUID;
 
 /**
- * SY-3 DTO de respuesta de login.
+ * SY-3 | SY-4 DTO de respuesta de login.
  */
 @Data
 @AllArgsConstructor
