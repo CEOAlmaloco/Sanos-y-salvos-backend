@@ -1,4 +1,4 @@
-package com.javadiseno.sanosysalvos.pet.repository;
+package com.javadiseno.sanosysalvos.pet.repositories;
 
 import com.javadiseno.sanosysalvos.pet.models.PetModel;
 import com.javadiseno.sanosysalvos.pet.models.PetStatus;
