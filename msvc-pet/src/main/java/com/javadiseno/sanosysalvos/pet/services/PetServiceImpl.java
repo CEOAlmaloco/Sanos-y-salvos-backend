@@ -57,7 +57,16 @@ public class PetServiceImpl implements PetService {
     }
 
     @Override
-    @Transactional 
+    @Transactional(readOnly = true)
+    public PetModel getById(UUID id) {
+        if (id == null) {
+            throw new IllegalArgumentException("id must not be null");
+        }
+        return petRepository.findById(id).orElseThrow(() -> new PetNotFoundException(id));
+    }
+
+    @Override
+    @Transactional
     public PetModel updatePet(UUID id, PetModel patch) {
         if (id == null) {
             throw new IllegalArgumentException("id must not be null");

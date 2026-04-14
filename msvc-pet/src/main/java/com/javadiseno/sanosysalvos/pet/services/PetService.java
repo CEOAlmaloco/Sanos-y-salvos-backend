@@ -7,6 +7,8 @@ import java.util.UUID;
 public interface PetService {
 
     PetModel createPet(PetModel pet);
- 
+
+    PetModel getById(UUID id);
+
     PetModel updatePet(UUID id, PetModel patch);
 }
