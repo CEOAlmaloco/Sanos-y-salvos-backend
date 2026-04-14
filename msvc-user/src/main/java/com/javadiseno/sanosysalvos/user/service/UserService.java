@@ -7,4 +7,6 @@ public interface UserService {
     UserResponseDTO register(RegisterRequestDTO registerRequestDTO);
 
     LoginResponseDTO login(LoginRequestDTO loginRequestDTO);
+
+    UserResponseDTO getUserProfile(String email);
 }
