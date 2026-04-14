@@ -12,7 +12,6 @@ import java.util.UUID;
 @Repository
 public interface PetRepository extends JpaRepository<PetModel, UUID> {
 
-    /** SY-14 — pets linked to owner / reporter */
     List<PetModel> findByOwnerUserIdOrderByCreatedAtDesc(UUID ownerUserId);
 
     Optional<PetModel> findByMicrochipNumber(String microchipNumber);
