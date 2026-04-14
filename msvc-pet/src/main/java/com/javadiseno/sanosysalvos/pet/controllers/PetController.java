@@ -7,9 +7,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -22,6 +25,14 @@ public class PetController {
     @GetMapping("/{petId}")
     public PetModel getById(@PathVariable UUID petId) {
         return petService.getById(petId);
+    }
+
+    /** lista de mascotas por dueño */
+    @GetMapping
+    public List<PetModel> listByOwner(
+            @RequestParam UUID ownerUserId,
+            @RequestHeader(value = "X-User-Id", required = false) UUID actingUserId) {
+        return petService.listPetsForOwner(ownerUserId, actingUserId);
     }
 
     /** actualizacion parcial de una mascota */

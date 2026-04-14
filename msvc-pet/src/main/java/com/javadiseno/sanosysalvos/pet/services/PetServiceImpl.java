@@ -1,6 +1,7 @@
 package com.javadiseno.sanosysalvos.pet.services;
 
 import com.javadiseno.sanosysalvos.pet.client.UserServiceClient;
+import com.javadiseno.sanosysalvos.pet.exception.PetAccessDeniedException;
 import com.javadiseno.sanosysalvos.pet.exception.PetNotFoundException;
 import com.javadiseno.sanosysalvos.pet.models.PetModel;
 import com.javadiseno.sanosysalvos.pet.repositories.PetRepository;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -63,6 +65,21 @@ public class PetServiceImpl implements PetService {
             throw new IllegalArgumentException("id must not be null");
         }
         return petRepository.findById(id).orElseThrow(() -> new PetNotFoundException(id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PetModel> listPetsForOwner(UUID ownerUserId, UUID actingUserId) {
+        if (ownerUserId == null) {
+            throw new IllegalArgumentException("ownerUserId is required");
+        }
+        if (actingUserId == null) {
+            throw new IllegalArgumentException("Cabecera X-User-Id requerida hasta integrar JWT en gateway");
+        }
+        if (!ownerUserId.equals(actingUserId)) {
+            throw new PetAccessDeniedException("Solo puedes listar las mascotas asociadas a tu usuario");
+        }
+        return petRepository.findByOwnerUserIdOrderByCreatedAtDesc(ownerUserId);
     }
 
     @Override

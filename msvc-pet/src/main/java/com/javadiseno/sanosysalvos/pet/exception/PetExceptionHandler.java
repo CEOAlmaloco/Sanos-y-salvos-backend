@@ -35,4 +35,15 @@ public class PetExceptionHandler {
         log.warn("400 en {}: {}", request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
+
+    @ExceptionHandler(PetAccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleForbidden(PetAccessDeniedException ex, HttpServletRequest request) {
+        ErrorResponse body = new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                "Acceso denegado",
+                ex.getMessage(),
+                request.getRequestURI());
+        log.warn("403 en {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+    }
 }
