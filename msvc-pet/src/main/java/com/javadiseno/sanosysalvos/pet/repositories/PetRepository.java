@@ -18,5 +18,8 @@ public interface PetRepository extends JpaRepository<PetModel, UUID> {
 
     boolean existsByMicrochipNumber(String microchipNumber);
 
+    /** Microchip unico comparado con otras mascotas al actualizar o crear una mascota */
+    boolean existsByMicrochipNumberAndIdNot(String microchipNumber, UUID id);
+
     List<PetModel> findByStatus(PetStatus status);
 }
