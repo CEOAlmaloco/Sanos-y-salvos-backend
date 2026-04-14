@@ -19,7 +19,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(@NonNull String email) throws UsernameNotFoundException {
 
-        var user = userRepository.findByEmail(email)
+        var user = userRepository.findUserByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
 
         var authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());

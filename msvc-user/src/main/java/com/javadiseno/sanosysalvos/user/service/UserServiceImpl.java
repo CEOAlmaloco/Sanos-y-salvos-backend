@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * SY-2 | SY-3 Implementación de UserService
+ * SY-2 | SY-3 | SY-6 Implementación de UserService
  */
 @Service
 @RequiredArgsConstructor
@@ -51,7 +51,7 @@ public class UserServiceImpl implements UserService{
     @Transactional(readOnly = true)
     public LoginResponseDTO login(LoginRequestDTO loginRequestDTO) {
 
-        User user = userRepository.findByEmail(loginRequestDTO.getEmail())
+        User user = userRepository.findUserByEmail(loginRequestDTO.getEmail())
                 .orElseThrow(InvalidCredentialsException::new);
 
         if (!passwordEncoder.matches(loginRequestDTO.getPassword(), user.getHashPassword())){
@@ -69,4 +69,15 @@ public class UserServiceImpl implements UserService{
                 .role(user.getRole())
                 .build();
     }
+
+    //SY-6
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponseDTO getUserProfile(String email){
+        User user = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException(email));
+
+        return userMapper.toResponseDTO(user);
+    }
+
 }
