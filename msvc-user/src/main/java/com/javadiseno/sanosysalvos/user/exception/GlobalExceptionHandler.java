@@ -3,6 +3,7 @@ package com.javadiseno.sanosysalvos.user.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -26,6 +27,17 @@ public class GlobalExceptionHandler{
                         HttpStatus.BAD_REQUEST.value(),
                         "Error de coincidencia",
                         errors,
+                        LocalDateTime.now()
+                ));
+    }
+
+    @ExceptionHandler(SelfRoleChangeException.class)
+    public ResponseEntity<ErrorResponse> handleSelfRoleChange(SelfRoleChangeException ex){
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getMessage(),
                         LocalDateTime.now()
                 ));
     }
@@ -61,6 +73,17 @@ public class GlobalExceptionHandler{
                 ));
     }
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex){
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse(
+                        HttpStatus.FORBIDDEN.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                ));
+    }
+
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleUserNotFound (UserNotFoundException ex){
         return ResponseEntity
@@ -84,7 +107,7 @@ public class GlobalExceptionHandler{
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleException() {
       return ResponseEntity
               .status(HttpStatus.INTERNAL_SERVER_ERROR)
               .body(new ErrorResponse(
