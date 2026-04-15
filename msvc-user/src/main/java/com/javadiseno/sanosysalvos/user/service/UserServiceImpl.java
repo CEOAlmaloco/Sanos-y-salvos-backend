@@ -65,6 +65,7 @@ public class UserServiceImpl implements UserService{
                 .tokenType("Bearer")
                 .userId(user.getId())
                 .name(user.getName())
+                .lastName(user.getLastName())
                 .email(user.getEmail())
                 .role(user.getRole())
                 .build();
@@ -76,6 +77,18 @@ public class UserServiceImpl implements UserService{
     public UserResponseDTO getUserProfile(String email){
         User user = userRepository.findUserByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException(email));
+
+        return userMapper.toResponseDTO(user);
+    }
+
+    @Override
+    @Transactional
+    public UserResponseDTO updateUserProfile(String email, UpdateProfileRequestDTO updateProfileRequestDTO){
+        User user = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException(email));
+
+
+        userMapper.updateEntityFromDTO(updateProfileRequestDTO, user);
 
         return userMapper.toResponseDTO(user);
     }

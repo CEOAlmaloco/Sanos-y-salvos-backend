@@ -9,4 +9,6 @@ public interface UserService {
     LoginResponseDTO login(LoginRequestDTO loginRequestDTO);
 
     UserResponseDTO getUserProfile(String email);
+
+    UserResponseDTO updateUserProfile(String email, UpdateProfileRequestDTO updateProfileRequestDTO);
 }

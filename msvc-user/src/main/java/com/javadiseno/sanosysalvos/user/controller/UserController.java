@@ -1,7 +1,9 @@
 package com.javadiseno.sanosysalvos.user.controller;
 
+import com.javadiseno.sanosysalvos.user.dto.UpdateProfileRequestDTO;
 import com.javadiseno.sanosysalvos.user.dto.UserResponseDTO;
 import com.javadiseno.sanosysalvos.user.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,6 +25,18 @@ public class UserController {
             @AuthenticationPrincipal UserDetails userDetails){
 
         UserResponseDTO profile = userService.getUserProfile(userDetails.getUsername());
+        return ResponseEntity
+                .ok(profile);
+    }
+
+    //SY-7
+    @PatchMapping("/me")
+    public ResponseEntity<UserResponseDTO> updateMyProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody UpdateProfileRequestDTO updateProfileRequestDTO
+            ){
+
+        UserResponseDTO profile = userService.updateUserProfile(userDetails.getUsername(), updateProfileRequestDTO);
         return ResponseEntity
                 .ok(profile);
     }
