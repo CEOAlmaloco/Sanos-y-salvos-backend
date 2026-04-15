@@ -10,8 +10,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 /**
- * SY-2 | SY-3 | SY-6 Implementación de UserService
+ * SY-2 | SY-3 | SY-6 | SY-7 | SY-8 Implementación de UserService
  */
 @Service
 @RequiredArgsConstructor
@@ -91,6 +93,25 @@ public class UserServiceImpl implements UserService{
         userMapper.updateEntityFromDTO(updateProfileRequestDTO, user);
 
         return userMapper.toResponseDTO(user);
+    }
+
+    @Override
+    @Transactional
+    public UserResponseDTO changeUserRole(String adminEmail, UUID targetId, ChangeRoleRequestDTO changeRoleRequestDTO){
+
+        User admin = userRepository.findUserByEmail(adminEmail)
+                .orElseThrow(() -> new UserNotFoundException(adminEmail));
+
+        if(admin.getId().equals(targetId)){
+            throw new SelfRoleChangeException();
+        }
+
+        User target = userRepository.findById(targetId)
+                .orElseThrow(() -> new UserNotFoundException(targetId.toString()));
+
+        target.setRole(Role.valueOf(changeRoleRequestDTO.getRole()));
+
+        return userMapper.toResponseDTO(userRepository.save(target));
     }
 
 }
