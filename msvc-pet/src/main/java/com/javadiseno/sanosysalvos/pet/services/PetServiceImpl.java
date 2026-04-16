@@ -84,7 +84,7 @@ public class PetServiceImpl implements PetService {
 
     @Override
     @Transactional
-    public PetModel updatePet(UUID id, PetModel patch) {
+    public PetModel updatePet(UUID id, PetModel patch, UUID actingUserId) {
         if (id == null) {
             throw new IllegalArgumentException("id must not be null");
         }
@@ -93,8 +93,33 @@ public class PetServiceImpl implements PetService {
         }
 
         PetModel existing = petRepository.findById(id).orElseThrow(() -> new PetNotFoundException(id));
+        assertOwnerOrOpen(existing, actingUserId);
         applyPatch(existing, patch, id);
         return petRepository.save(existing);
+    }
+
+    @Override
+    @Transactional
+    public void deletePetForOwner(UUID petId, UUID actingUserId) {
+        if (petId == null) {
+            throw new IllegalArgumentException("petId must not be null");
+        }
+        if (actingUserId == null) {
+            throw new IllegalArgumentException("Cabecera X-User-Id requerida");
+        }
+        PetModel existing = petRepository.findById(petId).orElseThrow(() -> new PetNotFoundException(petId));
+        assertOwnerOrOpen(existing, actingUserId);
+        petRepository.delete(existing);
+    }
+
+    /** si la mascota tiene dueño solo el puede actuar sino se debe requerir la cabecera X-User-Id*/
+    private void assertOwnerOrOpen(PetModel existing, UUID actingUserId) {
+        if (actingUserId == null) {
+            throw new IllegalArgumentException("Cabecera X-User-Id requerida");
+        }
+        if (existing.getOwnerUserId() != null && !existing.getOwnerUserId().equals(actingUserId)) {
+            throw new PetAccessDeniedException("Solo el dueño registrado puede modificar o eliminar esta mascota");
+        }
     }
 
     private void applyPatch(PetModel existing, PetModel patch, UUID id) {

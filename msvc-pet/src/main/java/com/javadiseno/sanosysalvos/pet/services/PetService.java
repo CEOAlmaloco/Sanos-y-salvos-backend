@@ -13,5 +13,7 @@ public interface PetService {
 
     List<PetModel> listPetsForOwner(UUID ownerUserId, UUID actingUserId);
 
-    PetModel updatePet(UUID id, PetModel patch);
+    PetModel updatePet(UUID id, PetModel patch, UUID actingUserId);
+
+    void deletePetForOwner(UUID petId, UUID actingUserId);
 }
