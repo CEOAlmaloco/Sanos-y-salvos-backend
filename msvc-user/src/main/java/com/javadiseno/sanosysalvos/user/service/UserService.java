@@ -15,4 +15,9 @@ public interface UserService {
     UserResponseDTO updateUserProfile(String email, UpdateProfileRequestDTO updateProfileRequestDTO);
 
     UserResponseDTO changeUserRole(String adminEmail, UUID targetId, ChangeRoleRequestDTO changeRoleRequestDTO);
+
+    /**
+     * Expuesto para otros microservicios (Pet, Report) vía {@code /api/v1/internal/users/{id}}.
+     */
+    UserResponseDTO getUserById(UUID id);
 }

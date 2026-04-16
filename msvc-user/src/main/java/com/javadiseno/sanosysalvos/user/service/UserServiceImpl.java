@@ -1,7 +1,11 @@
 package com.javadiseno.sanosysalvos.user.service;
 
 import com.javadiseno.sanosysalvos.user.dto.*;
-import com.javadiseno.sanosysalvos.user.exception.*;
+import com.javadiseno.sanosysalvos.user.exception.EmailAlreadyExistsException;
+import com.javadiseno.sanosysalvos.user.exception.InvalidCredentialsException;
+import com.javadiseno.sanosysalvos.user.exception.PasswordMismatchException;
+import com.javadiseno.sanosysalvos.user.exception.SelfRoleChangeException;
+import com.javadiseno.sanosysalvos.user.exception.UserNotFoundException;
 import com.javadiseno.sanosysalvos.user.model.Role;
 import com.javadiseno.sanosysalvos.user.model.User;
 import com.javadiseno.sanosysalvos.user.repository.UserRepository;
@@ -114,4 +118,11 @@ public class UserServiceImpl implements UserService{
         return userMapper.toResponseDTO(userRepository.save(target));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponseDTO getUserById(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id.toString()));
+        return userMapper.toResponseDTO(user);
+    }
 }
