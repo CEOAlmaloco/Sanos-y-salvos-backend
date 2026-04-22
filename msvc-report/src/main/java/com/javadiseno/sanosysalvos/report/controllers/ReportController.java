@@ -3,9 +3,11 @@ package com.javadiseno.sanosysalvos.report.controllers;
 import com.javadiseno.sanosysalvos.report.dtos.requests.CreateReportRequest;
 import com.javadiseno.sanosysalvos.report.dtos.requests.PatchReportRequest;
 import com.javadiseno.sanosysalvos.report.dtos.requests.ResolveReportRequest;
+import com.javadiseno.sanosysalvos.report.exceptions.ReportException;
 import com.javadiseno.sanosysalvos.report.exceptions.ResourceNotFoundException;
 import com.javadiseno.sanosysalvos.report.mapping.ReportApiMapper;
 import com.javadiseno.sanosysalvos.report.models.ReportModel;
+import com.javadiseno.sanosysalvos.report.security.ReportJwtPrincipal;
 import com.javadiseno.sanosysalvos.report.services.ReportService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -39,15 +42,31 @@ public class ReportController {
         return reportService.findAll(pageable);
     }
 
-    //TEMPORAL: permite obtener el usuario por el body o el header SIN JWT autenticado
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ReportModel create(
             @RequestBody CreateReportRequest body,
-            @RequestHeader(value = "X-User-Id", required = false) UUID userIdFromHeader) {
-        UUID reporter = body.getReporterUserId() != null ? body.getReporterUserId() : userIdFromHeader;
+            @RequestHeader(value = "X-User-Id", required = false) UUID userIdFromHeader,
+            Authentication authentication) {
+        UUID reporter = resolveReporterUserId(body, userIdFromHeader, authentication);
         ReportModel entity = ReportApiMapper.toNewEntity(body, reporter);
         return reportService.save(entity);
+    }
+
+    /** Reporter efectivo = usuario del JWT; body/header deben coincidir si se envían. */
+    private static UUID resolveReporterUserId(
+            CreateReportRequest body, UUID userIdFromHeader, Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof ReportJwtPrincipal p)) {
+            throw new ReportException("Autenticación JWT requerida para crear reporte");
+        }
+        UUID fromToken = p.getUserId();
+        if (body.getReporterUserId() != null && !body.getReporterUserId().equals(fromToken)) {
+            throw new ReportException("reporterUserId no coincide con el usuario del token");
+        }
+        if (userIdFromHeader != null && !userIdFromHeader.equals(fromToken)) {
+            throw new ReportException("X-User-Id no coincide con el usuario del token");
+        }
+        return fromToken;
     }
 
     @GetMapping("/{reportId}")

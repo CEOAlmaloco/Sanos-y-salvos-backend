@@ -3,13 +3,14 @@ package com.javadiseno.sanosysalvos.report.controllers;
 import com.javadiseno.sanosysalvos.report.exceptions.ReportException;
 import com.javadiseno.sanosysalvos.report.exceptions.ResourceNotFoundException;
 import com.javadiseno.sanosysalvos.report.models.ReportModel;
+import com.javadiseno.sanosysalvos.report.security.ReportJwtPrincipal;
 import com.javadiseno.sanosysalvos.report.services.ReportService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,14 +24,13 @@ public class UserReportController {
 
     private final ReportService reportService;
 
-    //el me es el usuario que esta autenticado TODO _: hay q cambiarlo por el jwt
+    /** Requiere {@code Authorization: Bearer &lt;JWT&gt;} (subject = userId). */
     @GetMapping("/me/reports")
-    public List<ReportModel> myReports(
-            @RequestHeader(value = "X-User-Id", required = false) UUID userId) {
-        if (userId == null) {
-            throw new ReportException("Cabecera X-User-Id requerida hasta integrar JWT");
+    public List<ReportModel> myReports(Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof ReportJwtPrincipal p)) {
+            throw new ReportException("Autenticación JWT requerida para /me/reports");
         }
-        return reportService.findByReporterUserIdOrderByCreatedAtDesc(userId);
+        return reportService.findByReporterUserIdOrderByCreatedAtDesc(p.getUserId());
     }
 
     //lista de reportes de un usuario

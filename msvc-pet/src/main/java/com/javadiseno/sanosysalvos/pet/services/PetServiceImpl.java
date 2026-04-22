@@ -1,0 +1,179 @@
+package com.javadiseno.sanosysalvos.pet.services;
+
+import com.javadiseno.sanosysalvos.pet.client.UserServiceClient;
+import com.javadiseno.sanosysalvos.pet.exception.PetAccessDeniedException;
+import com.javadiseno.sanosysalvos.pet.exception.PetNotFoundException;
+import com.javadiseno.sanosysalvos.pet.models.PetModel;
+import com.javadiseno.sanosysalvos.pet.repositories.PetRepository;
+import feign.FeignException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class PetServiceImpl implements PetService {
+
+    private final PetRepository petRepository;
+    private final UserServiceClient userServiceClient;
+
+    @Override
+    @Transactional
+    public PetModel createPet(PetModel pet) {
+        if (pet == null) {
+            throw new IllegalArgumentException("pet must not be null");
+        }
+        if (pet.getName() == null || pet.getName().isBlank()) {
+            throw new IllegalArgumentException("name is required");
+        }
+
+        pet.setId(null);
+        pet.setCreatedAt(null);
+        pet.setUpdatedAt(null);
+
+        String micro = pet.getMicrochipNumber();
+        if (micro != null && !micro.isBlank()) {
+            String trimmed = micro.trim();
+            if (petRepository.existsByMicrochipNumber(trimmed)) { //trimmed es el numero de microchip sin espacios
+                throw new IllegalArgumentException("microchip number already registered");
+            }
+            pet.setMicrochipNumber(trimmed);
+        }
+
+        UUID ownerId = pet.getOwnerUserId();
+        if (ownerId != null) {
+            try {
+                userServiceClient.getUserById(ownerId);
+            } catch (FeignException e) {
+                if (e.status() == 404) {
+                    throw new IllegalArgumentException("owner user does not exist: " + ownerId, e);
+                }
+                throw e;
+            }
+        }
+
+        return petRepository.save(pet);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PetModel getById(UUID id) {
+        if (id == null) {
+            throw new IllegalArgumentException("id must not be null");
+        }
+        return petRepository.findById(id).orElseThrow(() -> new PetNotFoundException(id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PetModel> listPetsForOwner(UUID ownerUserId, UUID actingUserId) {
+        if (ownerUserId == null) {
+            throw new IllegalArgumentException("ownerUserId is required");
+        }
+        if (actingUserId == null) {
+            throw new IllegalArgumentException("Cabecera X-User-Id requerida hasta integrar JWT en gateway");
+        }
+        if (!ownerUserId.equals(actingUserId)) {
+            throw new PetAccessDeniedException("Solo puedes listar las mascotas asociadas a tu usuario");
+        }
+        return petRepository.findByOwnerUserIdOrderByCreatedAtDesc(ownerUserId);
+    }
+
+    @Override
+    @Transactional
+    public PetModel updatePet(UUID id, PetModel patch, UUID actingUserId) {
+        if (id == null) {
+            throw new IllegalArgumentException("id must not be null");
+        }
+        if (patch == null) {
+            throw new IllegalArgumentException("body must not be null");
+        }
+
+        PetModel existing = petRepository.findById(id).orElseThrow(() -> new PetNotFoundException(id));
+        assertOwnerOrOpen(existing, actingUserId);
+        applyPatch(existing, patch, id);
+        return petRepository.save(existing);
+    }
+
+    @Override
+    @Transactional
+    public void deletePetForOwner(UUID petId, UUID actingUserId) {
+        if (petId == null) {
+            throw new IllegalArgumentException("petId must not be null");
+        }
+        if (actingUserId == null) {
+            throw new IllegalArgumentException("Cabecera X-User-Id requerida");
+        }
+        PetModel existing = petRepository.findById(petId).orElseThrow(() -> new PetNotFoundException(petId));
+        assertOwnerOrOpen(existing, actingUserId);
+        petRepository.delete(existing);
+    }
+
+    /** si la mascota tiene dueño solo el puede actuar sino se debe requerir la cabecera X-User-Id*/
+    private void assertOwnerOrOpen(PetModel existing, UUID actingUserId) {
+        if (actingUserId == null) {
+            throw new IllegalArgumentException("Cabecera X-User-Id requerida");
+        }
+        if (existing.getOwnerUserId() != null && !existing.getOwnerUserId().equals(actingUserId)) {
+            throw new PetAccessDeniedException("Solo el dueño registrado puede modificar o eliminar esta mascota");
+        }
+    }
+
+    private void applyPatch(PetModel existing, PetModel patch, UUID id) {
+        if (patch.getName() != null) {
+            if (patch.getName().isBlank()) {
+                throw new IllegalArgumentException("name cannot be blank");
+            }
+            existing.setName(patch.getName().trim());
+        }
+        if (patch.getSpecies() != null) {
+            existing.setSpecies(patch.getSpecies());
+        }
+        if (patch.getBreed() != null) {
+            existing.setBreed(patch.getBreed());
+        }
+        if (patch.getColor() != null) {
+            existing.setColor(patch.getColor());
+        }
+        if (patch.getSize() != null) {
+            existing.setSize(patch.getSize());
+        }
+        if (patch.getStatus() != null) {
+            existing.setStatus(patch.getStatus());
+        }
+
+        if (patch.getMicrochipNumber() != null) {
+            String raw = patch.getMicrochipNumber().trim(); //raw es el numero de microchip sin espacios
+            if (raw.isEmpty()) {
+                existing.setMicrochipNumber(null);
+            } else if (!raw.equals(existing.getMicrochipNumber())) {
+                if (petRepository.existsByMicrochipNumberAndIdNot(raw, id)) {
+                    throw new IllegalArgumentException("microchip number already registered");
+                }
+                existing.setMicrochipNumber(raw);
+            }
+        }
+
+        if (patch.getOwnerUserId() != null) {
+            UUID newOwner = patch.getOwnerUserId();
+            if (existing.getOwnerUserId() == null || !newOwner.equals(existing.getOwnerUserId())) {
+                try {
+                    userServiceClient.getUserById(newOwner);
+                } catch (FeignException e) {
+                    if (e.status() == 404) {
+                        throw new IllegalArgumentException("owner user does not exist: " + newOwner, e);
+                    }
+                    throw e;
+                }
+            }
+            existing.setOwnerUserId(newOwner);
+        }
+
+        if (patch.getPrimaryPhotoMediaId() != null) {
+            existing.setPrimaryPhotoMediaId(patch.getPrimaryPhotoMediaId());
+        }
+    }
+}

@@ -1,0 +1,11 @@
+# Build desde la raíz del monorepo (Sanos-y-salvos-backend): docker compose build
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
+WORKDIR /w
+COPY . .
+RUN mvn -q -pl msvc-user -am package -DskipTests
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /w/msvc-user/target/msvc-user-*.jar app.jar
+EXPOSE 8081
+ENTRYPOINT ["java","-jar","/app/app.jar"]

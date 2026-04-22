@@ -1,5 +1,7 @@
 package com.javadiseno.sanosysalvos.report.services;
 
+import com.javadiseno.sanosysalvos.report.client.PetServiceClient;
+import com.javadiseno.sanosysalvos.report.client.UserServiceClient;
 import com.javadiseno.sanosysalvos.report.dtos.requests.PatchReportRequest;
 import com.javadiseno.sanosysalvos.report.dtos.requests.ResolveReportRequest;
 import com.javadiseno.sanosysalvos.report.exceptions.ReportException;
@@ -8,6 +10,7 @@ import com.javadiseno.sanosysalvos.report.mapping.ReportApiMapper;
 import com.javadiseno.sanosysalvos.report.models.ReportModel;
 import com.javadiseno.sanosysalvos.report.models.ReportModel.ReportStatus;
 import com.javadiseno.sanosysalvos.report.repositories.ReportRepository;
+import feign.FeignException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class ReportServiceImpl implements ReportService {
 
     private final ReportRepository reportRepository;
+    private final PetServiceClient petServiceClient;
+    private final UserServiceClient userServiceClient;
 
     @Override
     @Transactional(readOnly = true)
@@ -87,6 +92,7 @@ public class ReportServiceImpl implements ReportService {
     @Transactional
     public ReportModel save(ReportModel report) {
         validateMandatoryFields(report);
+        validatePetAndReporterExist(report);
         if (report.getReportedAt() == null) {
             report.setReportedAt(Instant.now());
         }
@@ -94,6 +100,25 @@ public class ReportServiceImpl implements ReportService {
             report.setStatus(ReportStatus.ACTIVE);
         }
         return reportRepository.save(report);
+    }
+
+    private void validatePetAndReporterExist(ReportModel report) {
+        try {
+            petServiceClient.getPetById(report.getPetId());
+        } catch (FeignException e) {
+            if (e.status() == 404) {
+                throw new ReportException("Mascota no encontrada: " + report.getPetId());
+            }
+            throw new ReportException("No se pudo validar la mascota", e);
+        }
+        try {
+            userServiceClient.getUserById(report.getReporterUserId());
+        } catch (FeignException e) {
+            if (e.status() == 404) {
+                throw new ReportException("Usuario reportante no encontrado: " + report.getReporterUserId());
+            }
+            throw new ReportException("No se pudo validar el usuario reportante", e);
+        }
     }
 
     @Override
