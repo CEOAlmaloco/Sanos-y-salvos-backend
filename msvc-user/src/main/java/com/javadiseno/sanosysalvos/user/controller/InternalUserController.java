@@ -1,6 +1,8 @@
 package com.javadiseno.sanosysalvos.user.controller;
 
+import com.javadiseno.sanosysalvos.user.client.dto.UserActivitySummaryResponse;
 import com.javadiseno.sanosysalvos.user.dto.UserResponseDTO;
+import com.javadiseno.sanosysalvos.user.service.UserCrossActivityService;
 import com.javadiseno.sanosysalvos.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +22,16 @@ import java.util.UUID;
 public class InternalUserController {
 
     private final UserService userService;
+    private final UserCrossActivityService userCrossActivityService;
 
     @GetMapping("/users/{userId}")
     public ResponseEntity<UserResponseDTO> getUserById(@PathVariable UUID userId) {
         return ResponseEntity.ok(userService.getUserById(userId));
+    }
+
+    /** Conteos agregados por Feign -Pet + Report-*/
+    @GetMapping("/users/{userId}/activity")
+    public ResponseEntity<UserActivitySummaryResponse> getActivitySummary(@PathVariable UUID userId) {
+        return ResponseEntity.ok(userCrossActivityService.activityCounts(userId));
     }
 }
