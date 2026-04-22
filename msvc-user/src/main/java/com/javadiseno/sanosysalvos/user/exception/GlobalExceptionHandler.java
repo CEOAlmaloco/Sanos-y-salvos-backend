@@ -1,0 +1,133 @@
+package com.javadiseno.sanosysalvos.user.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler{
+
+    @ExceptionHandler(PasswordMismatchException.class)
+    public ResponseEntity<ValidationErrorsResponse> handlePasswordMismatch(PasswordMismatchException ex){
+        Map<String, String> errors = new HashMap<>();
+        errors.put("confirmPassword", ex.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ValidationErrorsResponse(
+                        HttpStatus.BAD_REQUEST.value(),
+                        "Error de coincidencia",
+                        errors,
+                        LocalDateTime.now()
+                ));
+    }
+
+    @ExceptionHandler(SelfRoleChangeException.class)
+    public ResponseEntity<ErrorResponse> handleSelfRoleChange(SelfRoleChangeException ex){
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                ));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ValidationErrorsResponse> handleValidationErrors (MethodArgumentNotValidException ex) {
+
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String field = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(field, errorMessage);
+        });
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ValidationErrorsResponse(
+                        HttpStatus.BAD_REQUEST.value(),
+                        "Error de validación en los datos enviados",
+                        errors,
+                        LocalDateTime.now()
+                ));
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException ex){
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(
+                        HttpStatus.UNAUTHORIZED.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                ));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex){
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse(
+                        HttpStatus.FORBIDDEN.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                ));
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound (UserNotFoundException ex){
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(
+                        HttpStatus.NOT_FOUND.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                ));
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(
+                        HttpStatus.CONFLICT.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                ));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleException() {
+      return ResponseEntity
+              .status(HttpStatus.INTERNAL_SERVER_ERROR)
+              .body(new ErrorResponse(
+                      HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                      "Error interno del servidor",
+                      LocalDateTime.now()
+              ));
+    }
+
+    public record ErrorResponse(
+            int status,
+            String message,
+            LocalDateTime timestamp
+    ){}
+
+    public record ValidationErrorsResponse(
+            int status,
+            String message,
+            Map<String, String> errors,
+            LocalDateTime timestamp
+    ){}
+}
+

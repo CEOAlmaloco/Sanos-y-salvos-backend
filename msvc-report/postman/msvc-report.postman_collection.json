@@ -1,0 +1,256 @@
+{
+  "info": {
+    "_postman_id": "b2c3d4e5-msvc-report",
+    "name": "msvc-report (Sanos y Salvos)",
+    "description": "Todas las peticiones HTTP expuestas por msvc-report.\n\n- Puerto por defecto: 8082 (`application.properties`).\n- Cabecera `X-User-Id` (UUID): usada donde el código la documenta como temporal hasta JWT.\n- Sustituye las variables `reportId`, `petId`, `userId`, etc. por UUIDs reales de tu entorno.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8082" },
+    { "key": "reportId", "value": "00000000-0000-0000-0000-000000000001" },
+    { "key": "petId", "value": "00000000-0000-0000-0000-000000000002" },
+    { "key": "userId", "value": "00000000-0000-0000-0000-000000000003" },
+    { "key": "sightingId", "value": "00000000-0000-0000-0000-000000000004" },
+    { "key": "mediaId", "value": "00000000-0000-0000-0000-000000000005" }
+  ],
+  "item": [
+    {
+      "name": "Reports (CRUD principal)",
+      "item": [
+        {
+          "name": "GET Listar reportes (paginado)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/reports?page=0&size=20&sort=reportedAt,desc",
+            "description": "Lista paginada (`Pageable`). Ajusta `page`, `size`, `sort`."
+          }
+        },
+        {
+          "name": "POST Crear reporte",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User-Id", "value": "{{userId}}", "description": "Opcional si `reporterUserId` va en el body." }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"PERDIDO\",\n  \"titulo\": \"Se perdió mi mascota\",\n  \"descripcion\": \"Detalles del reporte\",\n  \"latitud\": -34.6,\n  \"longitud\": -58.4,\n  \"ubicacionTexto\": \"CABA\",\n  \"fechaReporte\": \"2026-04-10T15:00:00Z\",\n  \"petId\": \"{{petId}}\",\n  \"reporterUserId\": \"{{userId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/reports",
+            "description": "`tipo`: PERDIDO|ENCONTRADO|AVISTAMIENTO (o LOST|FOUND|SIGHTING). `petId` obligatorio con la lógica actual."
+          }
+        },
+        {
+          "name": "GET Reporte por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/reports/{{reportId}}"
+          }
+        },
+        {
+          "name": "PATCH Actualizar reporte (parcial)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Título actualizado\",\n  \"descripcion\": \"Nueva descripción\",\n  \"latitud\": -34.61,\n  \"longitud\": -58.41,\n  \"ubicacionTexto\": \"Nueva zona\",\n  \"fechaReporte\": \"2026-04-10T16:00:00Z\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/reports/{{reportId}}"
+          }
+        },
+        {
+          "name": "POST Resolver reporte (cerrar con nota)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"ENCONTRADO\",\n  \"nota\": \"La mascota volvió a casa\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/reports/{{reportId}}/resolve",
+            "description": "Body opcional; si no envías nada, usa objeto vacío en servidor."
+          }
+        },
+        {
+          "name": "POST Resolver reporte (sin body)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/reports/{{reportId}}/resolve"
+          }
+        },
+        {
+          "name": "PATCH Cerrar reporte",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/reports/{{reportId}}/close"
+          }
+        },
+        {
+          "name": "DELETE Eliminar reporte",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/reports/{{reportId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pets → Reports",
+      "item": [
+        {
+          "name": "GET Reportes por mascota (paginado)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pets/{{petId}}/reports?page=0&size=20"
+          }
+        },
+        {
+          "name": "GET Todos los reportes de la mascota (lista)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pets/{{petId}}/reports/all",
+            "description": "Orden por `reportedAt` descendente en servicio."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users → Reports",
+      "item": [
+        {
+          "name": "GET Mis reportes (me)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-User-Id", "value": "{{userId}}" }],
+            "url": "{{baseUrl}}/api/v1/users/me/reports",
+            "description": "Requiere cabecera `X-User-Id` hasta integrar JWT."
+          }
+        },
+        {
+          "name": "GET Reportes por usuario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/users/{{userId}}/reports"
+          }
+        },
+        {
+          "name": "GET Un reporte de un usuario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/users/{{userId}}/reports/{{reportId}}",
+            "description": "404 si el reporte no pertenece a ese usuario."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports → Sightings",
+      "item": [
+        {
+          "name": "GET Listar avistamientos del reporte",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/reports/{{reportId}}/sightings"
+          }
+        },
+        {
+          "name": "GET Un avistamiento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/reports/{{reportId}}/sightings/{{sightingId}}"
+          }
+        },
+        {
+          "name": "POST Crear avistamiento",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spottedAt\": \"2026-04-10T18:00:00Z\",\n  \"notes\": \"Visto cerca del parque\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/reports/{{reportId}}/sightings",
+            "description": "El `report` lo asigna el servidor; no hace falta enviarlo."
+          }
+        },
+        {
+          "name": "DELETE Eliminar avistamiento",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/reports/{{reportId}}/sightings/{{sightingId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports → Media",
+      "item": [
+        {
+          "name": "GET Listar medios del reporte",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/reports/{{reportId}}/media"
+          }
+        },
+        {
+          "name": "GET Un medio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/reports/{{reportId}}/media/{{mediaId}}"
+          }
+        },
+        {
+          "name": "POST Añadir medio (URL)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://ejemplo.com/foto.jpg\",\n  \"sortOrder\": 0\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/reports/{{reportId}}/media",
+            "description": "`url` obligatoria; `sortOrder` opcional."
+          }
+        },
+        {
+          "name": "DELETE Eliminar medio",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/reports/{{reportId}}/media/{{mediaId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Herramientas (dev)",
+      "item": [
+        {
+          "name": "GET Consola H2 (navegador)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/h2-console",
+            "description": "Solo con perfil `dev` y `spring.h2.console.enabled=true`. Abre en el navegador."
+          }
+        }
+      ]
+    }
+  ]
+}

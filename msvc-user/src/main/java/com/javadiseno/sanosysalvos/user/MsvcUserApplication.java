@@ -2,8 +2,10 @@ package com.javadiseno.sanosysalvos.user;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
-@SpringBootApplication()
+@SpringBootApplication
+@EnableFeignClients(basePackages = "com.javadiseno.sanosysalvos.user.client")
 public class MsvcUserApplication {
 
 	public static void main(String[] args) {
