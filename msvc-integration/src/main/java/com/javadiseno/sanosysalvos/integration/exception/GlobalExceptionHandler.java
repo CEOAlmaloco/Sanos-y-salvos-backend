@@ -42,6 +42,17 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(ReportServiceException.class)
+    public ResponseEntity<ErrorResponse> handleReportServiceError(ReportServiceException exception){
+        return ResponseEntity
+                .status(HttpStatus.BAD_GATEWAY)
+                .body(new ErrorResponse(
+                        HttpStatus.BAD_GATEWAY.value(),
+                        exception.getMessage(),
+                        LocalDateTime.now()
+                ));
+    }
+
     public record ErrorResponse(int status, String message, LocalDateTime timestamp){}
 
     public record ValidationErrorResponse(int status, String message, Map<String, String> errors, LocalDateTime timestamp){}

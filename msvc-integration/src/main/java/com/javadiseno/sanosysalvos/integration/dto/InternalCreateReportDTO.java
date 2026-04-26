@@ -16,6 +16,7 @@ public class InternalCreateReportDTO {
     private String descripcion;
     private BigDecimal latitud;
     private BigDecimal longitud;
+    private String ubicacionTexto;
     private Instant fechaReporte;
     private UUID petId;
     private UUID reporterUserId;
