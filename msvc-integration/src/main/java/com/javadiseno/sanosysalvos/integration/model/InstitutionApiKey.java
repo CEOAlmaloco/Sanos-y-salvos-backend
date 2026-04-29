@@ -14,6 +14,7 @@ import java.util.UUID;
 @Entity
 @Table(
     name = "institution_api_keys",
+    schema = "integrations_schema",
     uniqueConstraints = {
             @UniqueConstraint(name = "uk_institution_api_key", columnNames = "api_key"),
             @UniqueConstraint(name = "uk_institution_user_id", columnNames = "user_id")

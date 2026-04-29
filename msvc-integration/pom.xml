@@ -40,15 +40,13 @@
 		</dependency>
 
 		<!-- Persistencia -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 
-<!-- ⚠️ DEPENDENCIA DE POSTGRESQL PARA FUTURO -->
-<!--		<dependency>-->
-<!--			<groupId>org.postgresql</groupId>-->
-<!--			<artifactId>postgresql</artifactId>-->
-<!--			<scope>runtime</scope>-->
-<!--		</dependency>-->
-
-<!-- ⚠️ H2 TEMPORAL PARA PRUEBAS -->
+		<!-- H2 temporal para desarrollo local -->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

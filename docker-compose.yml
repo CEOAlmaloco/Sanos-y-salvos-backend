@@ -1,6 +1,6 @@
 
 # Requiere archivo ".env" (copiar desde ".env.example"). No commitees secretos.
-# Puertos HOST: 9081/9082/9083. Red interna: servicios en 8081/8082/8083.
+# Puertos HOST: 9081/9082/9083/9085. Red interna: servicios en 8081/8082/8083/8085.
 services:
   postgres:
     image: postgres:16-alpine
@@ -96,6 +96,28 @@ services:
         condition: service_started
     ports:
       - "9082:8082"
+
+  msvc-integration:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.msvc-integration
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      SANOS_REPORT_SERVICE_URL: http://msvc-report:8082
+    depends_on:
+      postgres:
+        condition: service_healthy
+      msvc-report:
+        condition: service_started
+    ports:
+      - "9085:8085"
 
 volumes:
   minio_data: {}
