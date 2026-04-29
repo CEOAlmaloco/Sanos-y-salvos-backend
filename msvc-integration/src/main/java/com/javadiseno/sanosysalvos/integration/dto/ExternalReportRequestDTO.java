@@ -26,16 +26,6 @@ public class ExternalReportRequestDTO {
     @NotNull(message = "El petId es obligatorio")
     private UUID petId;
 
-    @NotBlank(message = "La especie es obligatoria")
-    @Size(max = 50, message = "La especie no puede superar los 50 caracteres")
-    private String species;
-
-    @Size(max = 50, message = "La raza no puede superar los 50 caracteres")
-    private String breed;
-
-    @Size(max = 50, message = "El color no puede superar los 50 caracteres")
-    private String color;
-
     @Size(max = 100, message = "El título no puede superar los 100 caracteres")
     private String title;
 
