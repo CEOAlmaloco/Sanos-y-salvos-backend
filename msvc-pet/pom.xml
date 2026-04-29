@@ -41,12 +41,11 @@
 
 		<!-- Persistencia -->
 
-<!-- ⚠️ DEPENDENCIA DE POSTGRESQL PARA FUTURO -->
-<!--		<dependency>-->
-<!--			<groupId>org.postgresql</groupId>-->
-<!--			<artifactId>postgresql</artifactId>-->
-<!--			<scope>runtime</scope>-->
-<!--		</dependency>-->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 
 <!-- ⚠️ H2 TEMPORAL PARA PRUEBAS -->
 
