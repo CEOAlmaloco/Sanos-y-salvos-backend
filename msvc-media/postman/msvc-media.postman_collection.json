@@ -1,0 +1,82 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-msvc-media",
+    "name": "msvc-media (Sanos y Salvos)",
+    "description": "API de **msvc-media**: subida a MinIO/S3, URLs prefirmadas GET/PUT.\n\n**Contexto Sanos y Salvos:** sube fotos del reporte con `prefix` = `reports/<uuid-del-reporte>` y luego guarda la URL en **msvc-report** → `POST /api/v1/reports/{id}/media`. Colección de flujo completo: `postman/sanos-y-salvos-flujo.postman_collection.json`.\n\n- Puerto JVM local: **8084**. Docker host: **9084**.\n- Un archivo por petición, campo **file**.\n- `readUrl` debe usar host navegable (p. ej. `localhost:9000` con `MINIO_PRESIGN_ENDPOINT` en Docker).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8084" },
+    { "key": "reportId", "value": "00000000-0000-0000-0000-000000000000", "description": "Sustituir por el UUID del reporte (tras crear en msvc-report)." },
+    { "key": "objectKey", "value": "smoke-test/ejemplo.txt", "description": "Clave en bucket; viene en la respuesta de upload." }
+  ],
+  "item": [
+    {
+      "name": "GET Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/media/health",
+        "description": "Comprobación rápida; respuesta plain text `UP`."
+      }
+    },
+    {
+      "name": "POST Subir archivo (multipart)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "description": "Campo obligatorio; elige un archivo en Postman.",
+              "type": "file",
+              "src": ""
+            },
+            {
+              "key": "prefix",
+              "description": "Opcional. Ej: reports/<uuid> o carpetas lógicas.",
+              "type": "text",
+              "value": "reports/{{reportId}}"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/v1/media/upload",
+        "description": "Subida directa al bucket. Query opcional: mismo `prefix` que en form (`?prefix=...`). Respuesta 201: `bucket`, `objectKey`, `contentType`, `sizeBytes`, `readUrl`."
+      }
+    },
+    {
+      "name": "POST Presign PUT (JSON)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fileName\": \"foto.jpg\",\n  \"contentType\": \"image/jpeg\",\n  \"prefix\": \"reports/00000000-0000-0000-0000-000000000001\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/media/presign-put",
+        "description": "Devuelve URL PUT prefirmada para que el cliente suba el archivo directamente a MinIO/S3. `fileName` obligatorio; `contentType` y `prefix` opcionales."
+      }
+    },
+    {
+      "name": "GET URL de lectura prefirmada (read-url)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/media/read-url?objectKey={{objectKey}}&seconds=3600",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "media", "read-url"],
+          "query": [
+            { "key": "objectKey", "value": "{{objectKey}}", "description": "Misma clave que en el bucket (URL-encoded si tiene caracteres especiales)." },
+            { "key": "seconds", "value": "3600", "description": "Validez de la firma en segundos (default 3600)." }
+          ]
+        },
+        "description": "Genera URL GET prefirmada para leer un objeto existente. JSON: `objectKey`, `readUrl`, `expiresInSeconds`."
+      }
+    }
+  ]
+}
