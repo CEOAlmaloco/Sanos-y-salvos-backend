@@ -1,6 +1,5 @@
-
 # Requiere archivo ".env" (copiar desde ".env.example"). No commitees secretos.
-# Puertos HOST: 9081/9082/9083/9085. Red interna: servicios en 8081/8082/8083/8085.
+# Puertos HOST: 9081 user, 9082 report, 9083 pet, 9084 media, 9085 integration.
 services:
   postgres:
     image: postgres:16-alpine
@@ -30,6 +29,23 @@ services:
     volumes:
       - minio_data:/data
 
+  msvc-media:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.msvc-media
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_PRESIGN_ENDPOINT: ${MINIO_PRESIGN_ENDPOINT:-http://localhost:9000}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      SANOS_MEDIA_BUCKET: ${SANOS_MEDIA_BUCKET:-sanos-media}
+    depends_on:
+      minio:
+        condition: service_started
+    ports:
+      - "9084:8084"
+
   msvc-user:
     build:
       context: .
@@ -45,6 +61,7 @@ services:
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
       SANOS_PET_SERVICE_URL: http://msvc-pet:8083
       SANOS_REPORT_SERVICE_URL: http://msvc-report:8082
+      SANOS_MEDIA_SERVICE_URL: http://msvc-media:8084
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,10 +81,13 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       SANOS_USER_SERVICE_URL: http://msvc-user:8081
       SANOS_REPORT_SERVICE_URL: http://msvc-report:8082
+      SANOS_MEDIA_SERVICE_URL: http://msvc-media:8084
     depends_on:
       postgres:
         condition: service_healthy
       msvc-user:
+        condition: service_started
+      msvc-media:
         condition: service_started
     ports:
       - "9083:8083"
@@ -87,12 +107,15 @@ services:
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
       SANOS_USER_SERVICE_URL: http://msvc-user:8081
       SANOS_PET_SERVICE_URL: http://msvc-pet:8083
+      SANOS_MEDIA_SERVICE_URL: http://msvc-media:8084
     depends_on:
       postgres:
         condition: service_healthy
       msvc-user:
         condition: service_started
       msvc-pet:
+        condition: service_started
+      msvc-media:
         condition: service_started
     ports:
       - "9082:8082"
@@ -111,9 +134,12 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
       SANOS_REPORT_SERVICE_URL: http://msvc-report:8082
+      SANOS_MEDIA_SERVICE_URL: http://msvc-media:8084
     depends_on:
       postgres:
         condition: service_healthy
+      msvc-media:
+        condition: service_started
       msvc-report:
         condition: service_started
     ports:
