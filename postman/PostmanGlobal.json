@@ -1,0 +1,1251 @@
+{
+  "info": {
+    "_postman_id": "2f59455d-4759-476c-ae25-0f745368dc35",
+    "name": "Sanos y Salvos — User + Pet + Report + Media + Integration",
+    "description": "**Docker Compose (variables por defecto):** user **9081**, report **9082**, pet **9083**, media **9084**, integration **9085**. MinIO **9000**.\n\n**IDE / JVM local:** `baseUrlUser`→8081, `baseUrlReport`→8082, `baseUrlPet`→8083, `baseUrlMedia`→8084, `baseUrlIntegration`→8085.\n\n**ORDEN típico:** 1) Login → 2) POST pet → 3) POST report (Bearer) → 4) Media upload → POST media del reporte.\n\n**Integration:** cabecera **`X-Api-Key`** (variable `integrationApiKey`). La clave debe existir en la BD (`msvc-integration`); si no, **401**.\n\n**msvc-report:** carpeta *msvc-report* con `Authorization: Bearer {{token}}`.\n\n**Feign:** pet→User; report→Pet+User; internal/activity→Pet+Report.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "43149860"
+  },
+  "item": [
+    {
+      "name": "msvc-user (9081)",
+      "item": [
+        {
+          "name": "Auth — POST /api/v1/auth/register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Juan\",\n  \"lastName\": \"Perez\",\n  \"email\": \"juan.perez@test.com\",\n  \"password\": \"Abcdef12\",\n  \"confirmPassword\": \"Abcdef12\",\n  \"phone\": \"+56912345678\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlUser}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrlUser}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Contraseña: mayúscula, minúscula y número (mín. 8)."
+          },
+          "response": []
+        },
+        {
+          "name": "Auth — POST /api/v1/auth/login (ejecutar PRIMERO)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  var j = pm.response.json();",
+                  "  if (j.token) { pm.collectionVariables.set('token', j.token); }",
+                  "  if (j.userId) { pm.collectionVariables.set('userId', j.userId); }",
+                  "  pm.test('Login OK: token y userId guardados en la colección', function () {",
+                  "    pm.expect(j.token).to.be.a('string');",
+                  "    pm.expect(j.userId).to.exist;",
+                  "  });",
+                  "} else {",
+                  "  pm.test('Login falló: ' + pm.response.code, function () { pm.expect.fail(); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@test.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlUser}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrlUser}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Si va bien, `token` y `userId` se guardan en Variables de la colección."
+          },
+          "response": []
+        },
+        {
+          "name": "Users — GET /api/v1/users/me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlUser}}/api/v1/users/me",
+              "host": [
+                "{{baseUrlUser}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Users — PATCH /api/v1/users/me",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin\",\n  \"lastName\": \"Salvos\",\n  \"phone\": \"+56912345678\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlUser}}/api/v1/users/me",
+              "host": [
+                "{{baseUrlUser}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Users — PATCH /api/v1/users/{id}/role (ADMIN)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"OWNER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlUser}}/api/v1/users/{{targetUserId}}/role",
+              "host": [
+                "{{baseUrlUser}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{targetUserId}}",
+                "role"
+              ]
+            },
+            "description": "Solo rol ADMIN."
+          },
+          "response": []
+        },
+        {
+          "name": "Internal — GET /api/v1/internal/users/{userId}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrlUser}}/api/v1/internal/users/{{userId}}",
+              "host": [
+                "{{baseUrlUser}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "internal",
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "description": "API interna (Feign). Sin JWT en dev."
+          },
+          "response": []
+        },
+        {
+          "name": "Internal — GET /api/v1/internal/users/{userId}/activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrlUser}}/api/v1/internal/users/{{userId}}/activity",
+              "host": [
+                "{{baseUrlUser}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "internal",
+                "users",
+                "{{userId}}",
+                "activity"
+              ]
+            },
+            "description": "Feign User → pet + report."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "msvc-pet (9083)",
+      "item": [
+        {
+          "name": "GET /api/v1/pets (lista por dueño)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlPet}}/api/v1/pets?ownerUserId={{userId}}",
+              "host": [
+                "{{baseUrlPet}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets"
+              ],
+              "query": [
+                {
+                  "key": "ownerUserId",
+                  "value": "{{userId}}"
+                }
+              ]
+            },
+            "description": "Requiere Login. `userId` vacío → 400."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/pets/{petId}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrlPet}}/api/v1/pets/{{petId}}",
+              "host": [
+                "{{baseUrlPet}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/pets (crear)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  var j = pm.response.json();",
+                  "  if (j.id) { pm.collectionVariables.set('petId', j.id); }",
+                  "  pm.test('petId guardado', function () { pm.expect(j.id).to.exist; });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ownerUserId\": \"{{userId}}\",\n  \"name\": \"Firulais\",\n  \"species\": \"Perro\",\n  \"breed\": \"Mestizo\",\n  \"color\": \"Negro\",\n  \"size\": \"MEDIUM\",\n  \"status\": \"LOST\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlPet}}/api/v1/pets",
+              "host": [
+                "{{baseUrlPet}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets"
+              ]
+            },
+            "description": "Tests guardan `petId`."
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/v1/pets/{petId}",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Firulais II\",\n  \"status\": \"FOUND\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlPet}}/api/v1/pets/{{petId}}",
+              "host": [
+                "{{baseUrlPet}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/v1/pets/{petId}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlPet}}/api/v1/pets/{{petId}}",
+              "host": [
+                "{{baseUrlPet}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "msvc-report (9082) — requiere Bearer {{token}}",
+      "item": [
+        {
+          "name": "Reportes — GET /api/v1/reports (paginado)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/reports?page=0&size=20",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reportes — POST /api/v1/reports",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  var j = pm.response.json();",
+                  "  if (j.id) { pm.collectionVariables.set('reportId', j.id); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"LOST\",\n  \"titulo\": \"Se perdió mi mascota\",\n  \"descripcion\": \"Zona centro, collar rojo\",\n  \"latitud\": -33.45,\n  \"longitud\": -70.65,\n  \"ubicacionTexto\": \"Santiago\",\n  \"petId\": \"{{petId}}\",\n  \"reporterUserId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/reports",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports"
+              ]
+            },
+            "description": "Antes POST pet. Tests guardan `reportId`."
+          },
+          "response": []
+        },
+        {
+          "name": "Reportes — GET /api/v1/reports/{reportId}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/reports/{{reportId}}",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "{{reportId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reportes — PATCH /api/v1/reports/{reportId}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Actualizado\",\n  \"descripcion\": \"Nueva info\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/reports/{{reportId}}",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "{{reportId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reportes — POST /api/v1/reports/{reportId}/resolve",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"ENCONTRADO\",\n  \"nota\": \"Volvió a casa\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/reports/{{reportId}}/resolve",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "{{reportId}}",
+                "resolve"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reportes — PATCH /api/v1/reports/{reportId}/close",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/reports/{{reportId}}/close",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "{{reportId}}",
+                "close"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reportes — DELETE /api/v1/reports/{reportId}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/reports/{{reportId}}",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "{{reportId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Por mascota — GET /api/v1/pets/{petId}/reports (page)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/pets/{{petId}}/reports?page=0&size=20",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}",
+                "reports"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Por mascota — GET /api/v1/pets/{petId}/reports/all",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/pets/{{petId}}/reports/all",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}",
+                "reports",
+                "all"
+              ]
+            },
+            "description": "Ruta usada por Feign en msvc-pet."
+          },
+          "response": []
+        },
+        {
+          "name": "Por usuario — GET /api/v1/users/me/reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/users/me/reports",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me",
+                "reports"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Por usuario — GET /api/v1/users/{userId}/reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/users/{{userId}}/reports",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{userId}}",
+                "reports"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Por usuario — GET /api/v1/users/{userId}/reports/{reportId}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/users/{{userId}}/reports/{{reportId}}",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{userId}}",
+                "reports",
+                "{{reportId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Avistamientos — GET /api/v1/reports/{reportId}/sightings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/reports/{{reportId}}/sightings",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "{{reportId}}",
+                "sightings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Avistamientos — POST /api/v1/reports/{reportId}/sightings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spottedAt\": \"2026-04-21T12:00:00Z\",\n  \"notes\": \"Visto cerca del parque\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/reports/{{reportId}}/sightings",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "{{reportId}}",
+                "sightings"
+              ]
+            },
+            "description": "El backend asigna el reporte."
+          },
+          "response": []
+        },
+        {
+          "name": "Avistamientos — GET /api/v1/reports/{reportId}/sightings/{sightingId}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/reports/{{reportId}}/sightings/{{sightingId}}",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "{{reportId}}",
+                "sightings",
+                "{{sightingId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Avistamientos — DELETE /api/v1/reports/{reportId}/sightings/{sightingId}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/reports/{{reportId}}/sightings/{{sightingId}}",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "{{reportId}}",
+                "sightings",
+                "{{sightingId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Media reporte — GET /api/v1/reports/{reportId}/media",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/reports/{{reportId}}/media",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "{{reportId}}",
+                "media"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Media reporte — POST /api/v1/reports/{reportId}/media",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{mediaReadUrl}}\",\n  \"sortOrder\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/reports/{{reportId}}/media",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "{{reportId}}",
+                "media"
+              ]
+            },
+            "description": "Sustituí `mediaReadUrl` por el `readUrl` devuelto por msvc-media tras el upload, o definí la variable de colección `mediaReadUrl`."
+          },
+          "response": []
+        },
+        {
+          "name": "Media reporte — GET /api/v1/reports/{reportId}/media/{mediaId}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/reports/{{reportId}}/media/{{reportMediaId}}",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "{{reportId}}",
+                "media",
+                "{{reportMediaId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Media reporte — DELETE /api/v1/reports/{reportId}/media/{mediaId}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrlReport}}/api/v1/reports/{{reportId}}/media/{{reportMediaId}}",
+              "host": [
+                "{{baseUrlReport}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "{{reportId}}",
+                "media",
+                "{{reportMediaId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "msvc-media (9084)",
+      "item": [
+        {
+          "name": "GET Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrlMedia}}/api/v1/media/health",
+              "host": [
+                "{{baseUrlMedia}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "media",
+                "health"
+              ]
+            },
+            "description": "Respuesta texto plano: UP"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Subir archivo (multipart)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  var j = pm.response.json();",
+                  "  if (j.readUrl) { pm.collectionVariables.set('mediaReadUrl', j.readUrl); }",
+                  "  if (j.objectKey) { pm.collectionVariables.set('objectKey', j.objectKey); }",
+                  "  pm.test('readUrl y objectKey guardados', function () {",
+                  "    pm.expect(j.readUrl).to.exist;",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "description": "Elegí un archivo local",
+                  "type": "file",
+                  "value": ""
+                },
+                {
+                  "key": "prefix",
+                  "description": "Ej. reports/<uuid del reporte>",
+                  "type": "text",
+                  "value": "reports/{{reportId}}"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrlMedia}}/api/v1/media/upload",
+              "host": [
+                "{{baseUrlMedia}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "media",
+                "upload"
+              ]
+            },
+            "description": "201: bucket, objectKey, readUrl. Tests guardan `mediaReadUrl` y `objectKey`."
+          },
+          "response": []
+        },
+        {
+          "name": "POST Presign PUT (JSON)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fileName\": \"foto.jpg\",\n  \"contentType\": \"image/jpeg\",\n  \"prefix\": \"reports/{{reportId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlMedia}}/api/v1/media/presign-put",
+              "host": [
+                "{{baseUrlMedia}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "media",
+                "presign-put"
+              ]
+            },
+            "description": "URL PUT prefirmada hacia MinIO/S3."
+          },
+          "response": []
+        },
+        {
+          "name": "GET read-url (prefirmada)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrlMedia}}/api/v1/media/read-url?objectKey={{objectKey}}&seconds=3600",
+              "host": [
+                "{{baseUrlMedia}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "media",
+                "read-url"
+              ],
+              "query": [
+                {
+                  "key": "objectKey",
+                  "value": "{{objectKey}}"
+                },
+                {
+                  "key": "seconds",
+                  "value": "3600"
+                }
+              ]
+            },
+            "description": "Requiere `objectKey` (p. ej. tras upload)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "msvc-integration (9085)",
+      "item": [
+        {
+          "name": "POST /api/v1/integration/reports (externo → interno)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{integrationApiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalReportId\": \"ext-demo-001\",\n  \"reportType\": \"LOST\",\n  \"petId\": \"{{petId}}\",\n  \"title\": \"Reporte desde institución\",\n  \"description\": \"Avistamiento recibido por API\",\n  \"latitude\": -33.45,\n  \"longitude\": -70.65,\n  \"locationText\": \"Santiago\",\n  \"eventDate\": \"2026-04-21T10:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlIntegration}}/api/v1/integration/reports",
+              "host": [
+                "{{baseUrlIntegration}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "integration",
+                "reports"
+              ]
+            },
+            "description": "`reportType`: **LOST** o **FOUND**. `petId` debe existir en msvc-pet. Definí `integrationApiKey` en variables de colección. Respuesta 201: `internalReportId`, `externalReportId`, `message`."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrlUser",
+      "value": "http://localhost:9081"
+    },
+    {
+      "key": "baseUrlPet",
+      "value": "http://localhost:9083"
+    },
+    {
+      "key": "baseUrlReport",
+      "value": "http://localhost:9082"
+    },
+    {
+      "key": "baseUrlMedia",
+      "value": "http://localhost:9084"
+    },
+    {
+      "key": "baseUrlIntegration",
+      "value": "http://localhost:9085"
+    },
+    {
+      "key": "integrationApiKey",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "petId",
+      "value": ""
+    },
+    {
+      "key": "reportId",
+      "value": ""
+    },
+    {
+      "key": "sightingId",
+      "value": ""
+    },
+    {
+      "key": "reportMediaId",
+      "value": ""
+    },
+    {
+      "key": "objectKey",
+      "value": ""
+    },
+    {
+      "key": "mediaReadUrl",
+      "value": ""
+    },
+    {
+      "key": "targetUserId",
+      "value": "00000000-0000-0000-0000-000000000002"
+    }
+  ]
+}
