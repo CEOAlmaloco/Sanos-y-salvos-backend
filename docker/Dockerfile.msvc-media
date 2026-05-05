@@ -1,0 +1,10 @@
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
+WORKDIR /w
+COPY . .
+RUN mvn -q -pl msvc-media -am package -DskipTests
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /w/msvc-media/target/msvc-media-*.jar app.jar
+EXPOSE 8084
+ENTRYPOINT ["java","-jar","/app/app.jar"]

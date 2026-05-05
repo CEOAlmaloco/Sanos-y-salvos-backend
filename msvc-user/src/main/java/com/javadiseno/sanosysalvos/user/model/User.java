@@ -20,6 +20,7 @@ import java.util.UUID;
 public class User {
 
     @Id
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
     @PrePersist
