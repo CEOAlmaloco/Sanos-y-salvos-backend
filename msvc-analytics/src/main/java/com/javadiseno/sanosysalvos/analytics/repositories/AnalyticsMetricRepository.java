@@ -47,20 +47,19 @@ public class AnalyticsMetricRepository {
                 .keyEqualTo(Key.builder().partitionValue(pk).build());
 
         return table().query(QueryEnhancedRequest.builder()
-                        .queryConditional(condition)
-                        .build())
+                .queryConditional(condition)
+                .build())
                 .items()
                 .stream()
                 .collect(Collectors.toList());
     }
 
     // SY-72 Consulta métricas de un tipo en un rango de fechas.
-    public List<AnalyticsMetric> findByEventTypeAndDateRange(
-            String eventType, String fromDate, String toDate) {
+    public List<AnalyticsMetric> findByEventTypeAndDateRange(String eventType, String fromDate, String toDate) {
 
-        String pk      = "EVENTO#" + eventType;
-        String skFrom  = "FECHA#" + fromDate;
-        String skTo    = "FECHA#" + toDate + "#~";   // ~ es mayor que cualquier UUID en ASCII
+        String pk = "EVENTO#" + eventType;
+        String skFrom = "FECHA#" + fromDate;
+        String skTo = "FECHA#" + toDate + "#~";   // ~ es mayor que cualquier UUID en ASCII
 
         QueryConditional condition = QueryConditional.sortBetween(
                 Key.builder().partitionValue(pk).sortValue(skFrom).build(),
@@ -68,8 +67,8 @@ public class AnalyticsMetricRepository {
         );
 
         return table().query(QueryEnhancedRequest.builder()
-                        .queryConditional(condition)
-                        .build())
+                .queryConditional(condition)
+                .build())
                 .items()
                 .stream()
                 .collect(Collectors.toList());
