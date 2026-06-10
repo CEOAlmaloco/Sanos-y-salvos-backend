@@ -21,8 +21,14 @@ public class BusEventDTO {
     @JsonProperty("detail-type")
     private String detailType;
 
-    private String detail;
+    private EventDetailDTO detail;
 
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class EventDetailDTO{
 
         private UUID reportId;

@@ -48,6 +48,12 @@
 			<artifactId>spring-cloud-function-adapter-aws</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-lambda-java-events</artifactId>
+			<version>3.11.5</version>
+		</dependency>
+
 		<!-- ── Serialización ─────────────────────── -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
@@ -63,6 +69,11 @@
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>dynamodb</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>dynamodb-enhanced</artifactId>
 		</dependency>
 
 		<!-- ── Redis client ────────────────────
