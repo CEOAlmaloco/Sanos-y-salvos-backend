@@ -28,7 +28,7 @@ public class AnalyticsMetricRepository {
                 TableSchema.fromBean(AnalyticsMetric.class));
     }
 
-    // SY-71 Guarda una métrica en DynamoDB.
+    // SY-71 Guarda una métrica en DynamoDB
     public void save(AnalyticsMetric metric){
         try {
             table().putItem(metric);
@@ -39,7 +39,7 @@ public class AnalyticsMetricRepository {
         }
     }
 
-    // SY-72 Consulta todas las métricas de un tipo de evento.
+    // SY-72 Consulta todas las métricas de un tipo de evento
     public List<AnalyticsMetric> findByEventType(String eventType) {
         String pk = "EVENTO#" + eventType;
 
@@ -54,7 +54,7 @@ public class AnalyticsMetricRepository {
                 .collect(Collectors.toList());
     }
 
-    // SY-72 Consulta métricas de un tipo en un rango de fechas.
+    // SY-72 Consulta métricas de un tipo en un rango de fechas
     public List<AnalyticsMetric> findByEventTypeAndDateRange(String eventType, String fromDate, String toDate) {
 
         String pk = "EVENTO#" + eventType;

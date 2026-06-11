@@ -1,15 +1,16 @@
 package com.javadiseno.sanosysalvos.analytics.functions;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.javadiseno.sanosysalvos.analytics.dtos.BusEventDTO;
 import com.javadiseno.sanosysalvos.analytics.services.AnalyticsService;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.function.Consumer;
 
+// SY-70 Handler Lambda que consume mensajes de la cola SQS
 @Slf4j
 @Component
 @RequiredArgsConstructor

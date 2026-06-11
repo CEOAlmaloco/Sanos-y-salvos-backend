@@ -8,6 +8,7 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
+// SY-71 Configuración del cliente DynamoDB
 @Configuration
 public class DynamoDbConfig {
 

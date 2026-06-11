@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
+// SY-72 Servicio que calcula zonas calientes y cachea en Redis
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -26,7 +27,7 @@ public class HotZoneServiceImpl implements HotZoneService {
     private final ObjectMapper objectMapper;
 
     @Value("${analytics.cache.hot-zones-ttl-seconds:300}")
-    private Long cacheTtlSeconds;
+    private long cacheTtlSeconds;
 
     private static final String CACHE_KEY = "analytics:hot-zones";
 
@@ -35,6 +36,7 @@ public class HotZoneServiceImpl implements HotZoneService {
 
         // 1. Intentar desde caché Redis
         String cached = redisTemplate.opsForValue().get(CACHE_KEY);
+
         if (cached != null) {
             log.info("Hot zones desde caché Redis");
             try{

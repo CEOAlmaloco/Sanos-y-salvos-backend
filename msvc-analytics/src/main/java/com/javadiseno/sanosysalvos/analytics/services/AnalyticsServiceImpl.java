@@ -14,6 +14,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
+// SY-70 | SY-71 Servicio que transforma un evento
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -22,7 +23,7 @@ public class AnalyticsServiceImpl implements AnalyticsService{
     private final AnalyticsMetricRepository analyticsMetricRepository;
 
     @Value("${analytics.dynamodb.ttl-days:365}")
-    private Long ttlDays;
+    private long ttlDays;
 
     @Override
     public void processEvent(BusEventDTO busEventDTO) {

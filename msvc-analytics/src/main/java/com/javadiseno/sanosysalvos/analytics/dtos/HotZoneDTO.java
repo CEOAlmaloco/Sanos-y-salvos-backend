@@ -2,6 +2,7 @@ package com.javadiseno.sanosysalvos.analytics.dtos;
 
 import lombok.*;
 
+// SY-72 DTO que representa una zona caliente en el mapa de calor.
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,12 +17,12 @@ public class HotZoneDTO {
 
     private Double longitude;
 
-    private Long totalEvents;
+    private long totalEvents;
 
-    private Long petReportedCount;
-    private Long petFoundCount;
-    private Long matchFoundCount;
-    private Long petRecoveredCount;
+    private long petReportedCount;
+    private long petFoundCount;
+    private long matchFoundCount;
+    private long petRecoveredCount;
 
 
 }
