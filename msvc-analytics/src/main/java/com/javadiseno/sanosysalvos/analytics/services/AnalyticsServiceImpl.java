@@ -1,6 +1,7 @@
 package com.javadiseno.sanosysalvos.analytics.services;
 
 import com.javadiseno.sanosysalvos.analytics.dtos.BusEventDTO;
+import com.javadiseno.sanosysalvos.analytics.dtos.EventType;
 import com.javadiseno.sanosysalvos.analytics.models.AnalyticsMetric;
 import com.javadiseno.sanosysalvos.analytics.repositories.AnalyticsMetricRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +28,16 @@ public class AnalyticsServiceImpl implements AnalyticsService{
 
     @Override
     public void processEvent(BusEventDTO busEventDTO) {
-        if (busEventDTO == null || busEventDTO.getDetailType() == null){
+        if (busEventDTO == null || busEventDTO.getDetailType() == null) {
             log.warn("Evento nulo. Sera ignorado");
+            return;
+        }
+
+        // Validar que sea un tipo conocido
+        try {
+            EventType.valueOf(busEventDTO.getDetailType());
+        } catch (IllegalArgumentException e) {
+            log.warn("Tipo de evento desconocido: {} — ignorado", busEventDTO.getDetailType());
             return;
         }
 

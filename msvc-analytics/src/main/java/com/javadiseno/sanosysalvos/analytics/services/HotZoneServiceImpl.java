@@ -67,7 +67,7 @@ public class HotZoneServiceImpl implements HotZoneService {
         // Agrupar métricas de todos los tipos de evento por geohash
         Map<String, Map<String, Long>> zoneCounters = new HashMap<>();
 
-        for (String eventType : List.of("pet_reported", "pet_found", "match_found", "pet_recovered")) {
+        for (String eventType : List.of("pet_reported", "pet_found", "match_found")) {
             List<AnalyticsMetric> metrics = analyticsMetricRepository.findByEventType(eventType);
 
             for (AnalyticsMetric metric : metrics) {
@@ -89,17 +89,15 @@ public class HotZoneServiceImpl implements HotZoneService {
                     long petReported  = counts.getOrDefault("pet_reported",  0L);
                     long petFound     = counts.getOrDefault("pet_found",     0L);
                     long matchFound   = counts.getOrDefault("match_found",   0L);
-                    long petRecovered = counts.getOrDefault("pet_recovered", 0L);
 
                     return HotZoneDTO.builder()
                             .geohash(geohash)
                             .latitude(center[0])
                             .longitude(center[1])
-                            .totalEvents(petReported + petFound + matchFound + petRecovered)
+                            .totalEvents(petReported + petFound + matchFound)
                             .petReportedCount(petReported)
                             .petFoundCount(petFound)
                             .matchFoundCount(matchFound)
-                            .petRecoveredCount(petRecovered)
                             .build();
                 })
                 // Ordenar de mayor a menor por total de eventos

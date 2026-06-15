@@ -13,8 +13,4 @@ public class StatsResponseDTO {
     private long totalReports;
     private long totalPetsFound;
     private long totalMatches;
-    private long totalRecovered;
-
-    // totalRecovered / totalReports * 100
-    private double recoveryRatePercent;
 }

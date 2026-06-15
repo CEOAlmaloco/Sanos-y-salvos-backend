@@ -27,17 +27,11 @@ public class StatsServiceImpl implements StatsService {
         long totalReports = countByEventType("pet_reported");
         long totalFound = countByEventType("pet_found");
         long totalMatches = countByEventType("match_found");
-        long totalRecovered = countByEventType("pet_recovered");
-
-        double recoveryRate = totalReports > 0
-                ? (double) totalRecovered / totalReports * 100 : 0.0;
 
         return StatsResponseDTO.builder()
                 .totalReports(totalReports)
                 .totalPetsFound(totalFound)
                 .totalMatches(totalMatches)
-                .totalRecovered(totalRecovered)
-                .recoveryRatePercent(Math.round(recoveryRate * 100.0) / 100.0)
                 .build();
     }
 
@@ -48,17 +42,11 @@ public class StatsServiceImpl implements StatsService {
         long totalReports = countByEventTypeAndDateRange("pet_reported", fromDate, toDate);
         long totalFound = countByEventTypeAndDateRange("pet_found", fromDate, toDate);
         long totalMatches = countByEventTypeAndDateRange("match_found", fromDate, toDate);
-        long totalRecovered = countByEventTypeAndDateRange("pet_recovered", fromDate, toDate);
-
-        double recoveryRate = totalReports > 0
-                ? (double) totalRecovered / totalReports * 100 : 0.0;
 
         return StatsResponseDTO.builder()
                 .totalReports(totalReports)
                 .totalPetsFound(totalFound)
                 .totalMatches(totalMatches)
-                .totalRecovered(totalRecovered)
-                .recoveryRatePercent(Math.round(recoveryRate * 100.0) / 100.0)
                 .build();
     }
 

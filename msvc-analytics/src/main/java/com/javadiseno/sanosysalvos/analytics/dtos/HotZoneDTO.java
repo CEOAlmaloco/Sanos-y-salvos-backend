@@ -22,7 +22,5 @@ public class HotZoneDTO {
     private long petReportedCount;
     private long petFoundCount;
     private long matchFoundCount;
-    private long petRecoveredCount;
-
 
 }

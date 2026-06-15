@@ -4,6 +4,5 @@ package com.javadiseno.sanosysalvos.analytics.dtos;
 public enum EventType {
     pet_reported,
     pet_found,
-    match_found,
-    pet_recovered
+    match_found
 }
