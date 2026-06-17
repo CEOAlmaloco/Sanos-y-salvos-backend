@@ -140,11 +140,6 @@ services:
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
       SANOS_REPORT_SERVICE_URL: http://msvc-report:8082
       SANOS_MEDIA_SERVICE_URL: http://msvc-media:8084
-      EVENTBRIDGE_BUS_NAME: ${EVENTBRIDGE_BUS_NAME:-sanos-y-salvos-bus}
-      AWS_REGION: ${AWS_REGION:-us-east-1}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
     depends_on:
       postgres:
         condition: service_healthy

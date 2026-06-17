@@ -3,9 +3,6 @@ package com.javadiseno.sanosysalvos.analytics.models;
 import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
-import java.time.Instant;
-import java.util.UUID;
-
 
 // SY-71 Entidad que representa una métrica guardada en DynamoDB
 @Getter
@@ -41,7 +38,7 @@ public class AnalyticsMetric {
     @DynamoDbPartitionKey
     public String getPk() { return pk; }
 
-    @DynamoDbPartitionKey
+    @DynamoDbSortKey
     public String getSk() { return sk; }
 
     @DynamoDbAttribute("eventType")
