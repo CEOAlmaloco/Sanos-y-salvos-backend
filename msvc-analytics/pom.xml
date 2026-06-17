@@ -81,15 +81,6 @@
 			<artifactId>dynamodb-enhanced</artifactId>
 		</dependency>
 
-		<!-- ── Redis client ────────────────────
-             Cachear resultados de zonas calientes (hot zones)
-             que se recalcularían en cada consulta del mapa de calor.
-        ──────────────────────────────────────────────────────────────── -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>

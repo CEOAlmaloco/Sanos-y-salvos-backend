@@ -1,18 +1,13 @@
 package com.javadiseno.sanosysalvos.analytics.services;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.javadiseno.sanosysalvos.analytics.config.GeohashUtil;
 import com.javadiseno.sanosysalvos.analytics.dtos.HotZoneDTO;
 import com.javadiseno.sanosysalvos.analytics.models.AnalyticsMetric;
 import com.javadiseno.sanosysalvos.analytics.repositories.AnalyticsMetricRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,43 +18,16 @@ import java.util.stream.Collectors;
 public class HotZoneServiceImpl implements HotZoneService {
 
     private final AnalyticsMetricRepository analyticsMetricRepository;
-    private final StringRedisTemplate redisTemplate;
-    private final ObjectMapper objectMapper;
 
-    @Value("${analytics.cache.hot-zones-ttl-seconds:300}")
-    private long cacheTtlSeconds;
 
     private static final String CACHE_KEY = "analytics:hot-zones";
 
     @Override
     public List<HotZoneDTO> getHotZones() {
 
-        // 1. Intentar desde caché Redis
-        String cached = redisTemplate.opsForValue().get(CACHE_KEY);
-
-        if (cached != null) {
-            log.info("Hot zones desde caché Redis");
-            try{
-                return objectMapper.readValue(cached, new TypeReference<List<HotZoneDTO>>() {});
-            }catch (Exception e){
-                log.warn("Error deserializando caché de hot zones, recalculando: {}", e.getMessage());
-            }
-        }
-
-        // 2. Calcular desde DynamoDB
+        // 1. Calcular desde DynamoDB
         log.info("Calculando hot zones desde DynamoDB");
-        List<HotZoneDTO> hotZones = calculateHotZones();
-
-        // 3. Guardar en Redis con TTL
-        try {
-            String json = objectMapper.writeValueAsString(hotZones);
-            redisTemplate.opsForValue().set(CACHE_KEY, json, Duration.ofSeconds(cacheTtlSeconds));
-            log.info("Hot zones guardadas en Redis ({} zonas, TTL {}s)", hotZones.size(), cacheTtlSeconds);
-        } catch (Exception e) {
-            log.warn("Error guardando hot zones en Redis: {}", e.getMessage());
-        }
-
-        return hotZones;
+        return calculateHotZones();
     }
 
     private List<HotZoneDTO> calculateHotZones() {
