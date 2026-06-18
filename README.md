@@ -28,7 +28,67 @@ mvn clean verify
 mvn -pl msvc-usuario spring-boot:run
 ```
 
-Puertos por defecto: usuario **8081**, mascota **8082**, reporte **8083**, media **8084**.
+Puertos por defecto: usuario **8081**, mascota **8083**, reporte **8082**, media **8084**, integration **8085**.
+
+## Docker Swarm (IE7 / IE8)
+
+Requiere `.env` (copiar desde `.env.example`).
+
+### 1. Construir imágenes locales
+
+```bash
+docker build -f docker/Dockerfile.msvc-user -t sanos/msvc-user:latest .
+docker build -f docker/Dockerfile.msvc-pet -t sanos/msvc-pet:latest .
+docker build -f docker/Dockerfile.msvc-report -t sanos/msvc-report:latest .
+docker build -f docker/Dockerfile.msvc-media -t sanos/msvc-media:latest .
+docker build -f docker/Dockerfile.msvc-integration -t sanos/msvc-integration:latest .
+```
+
+### 2. Inicializar Swarm y desplegar stack
+
+```bash
+docker swarm init
+docker stack deploy -c docker-compose.swarm.yml sanos
+docker service ls
+```
+
+En PowerShell, exporta variables antes del deploy:
+
+```powershell
+Get-Content .env | ForEach-Object {
+  if ($_ -match '^\s*([^#][^=]+)=(.*)$') { Set-Item -Path "env:$($matches[1])" -Value $matches[2] }
+}
+docker stack deploy -c docker-compose.swarm.yml sanos
+```
+
+### 3. Escalar réplicas (demo IE8)
+
+```bash
+docker service scale sanos_msvc-user=3
+docker service ps sanos_msvc-user
+```
+
+### 4. Añadir nodo worker (opcional)
+
+En el manager:
+
+```bash
+docker swarm join-token worker
+```
+
+En otra máquina con Docker:
+
+```bash
+docker swarm join --token <TOKEN> <IP_MANAGER>:2377
+```
+
+### 5. Detener stack
+
+```bash
+docker stack rm sanos
+```
+
+Puertos expuestos: **9081** user, **9082** report, **9083** pet, **9084** media, **9085** integration.
 
 ## Requisitos
 
