@@ -42,6 +42,10 @@ jobs:
           cache: maven
 
       - name: Compilar y ejecutar tests
+        env:
+          JWT_SECRET: test-jwt-secret-ci-only-min-256-bits-hs256____________________________
+          DB_USERNAME: admin
+          DB_PASSWORD: ""
         run: mvn -B -ntp verify
 
   package-lambdas:
@@ -60,6 +64,10 @@ jobs:
           cache: maven
 
       - name: Package shade (matching, notification, analytics)
+        env:
+          JWT_SECRET: test-jwt-secret-ci-only-min-256-bits-hs256____________________________
+          DB_USERNAME: admin
+          DB_PASSWORD: ""
         run: mvn -B -ntp -pl msvc-matching,msvc-notification,msvc-analytics -am package -DskipTests
 
       - name: Subir artefactos Lambda
