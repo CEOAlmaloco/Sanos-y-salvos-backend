@@ -2,7 +2,6 @@ package com.javadiseno.sanosysalvos.analytics.functions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.javadiseno.sanosysalvos.analytics.dtos.ApiGatewayRequestDTO;
-import com.javadiseno.sanosysalvos.analytics.dtos.ApiGatewayResponseDTO;
 import com.javadiseno.sanosysalvos.analytics.dtos.HotZoneDTO;
 import com.javadiseno.sanosysalvos.analytics.dtos.StatsResponseDTO;
 import com.javadiseno.sanosysalvos.analytics.services.HotZoneService;
@@ -19,14 +18,19 @@ import java.util.function.Function;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class AnalyticsQueryHandler implements Function<ApiGatewayRequestDTO, ApiGatewayResponseDTO> {
+/**
+ * Devuelve JSON plano (String). Spring Cloud Function + API Gateway HTTP v2
+ * envuelven el resultado en {statusCode, body}; si devolvemos ApiGatewayResponseDTO
+ * se produce doble encapsulado y el cliente ve el wrapper completo.
+ */
+public class AnalyticsQueryHandler implements Function<ApiGatewayRequestDTO, String> {
 
     private final StatsService statsService;
     private final HotZoneService hotZoneService;
     private final ObjectMapper objectMapper;
 
     @Override
-    public ApiGatewayResponseDTO apply(ApiGatewayRequestDTO apiGatewayRequestDTO){
+    public String apply(ApiGatewayRequestDTO apiGatewayRequestDTO){
         try{
             String path = resolvePath(apiGatewayRequestDTO);
             log.info("AnalyticsQueryHandler - path: {}", path);
@@ -34,17 +38,21 @@ public class AnalyticsQueryHandler implements Function<ApiGatewayRequestDTO, Api
             return switch (path) {
                 case "/analytics/stats" -> handleStats(apiGatewayRequestDTO);
                 case "/analytics/hot-zones" -> handleHotZones();
-                default -> ApiGatewayResponseDTO.badRequest("Ruta no encontrada: " + path);
+                default -> objectMapper.writeValueAsString(Map.of("message", "Ruta no encontrada: " + path));
             };
         } catch (Exception e){
             log.error("Error en AnalyticsQueryHandler: {}", e.getMessage());
-            return ApiGatewayResponseDTO.internalError();
+            try {
+                return objectMapper.writeValueAsString(Map.of("message", "Error interno del servidor"));
+            } catch (Exception ex) {
+                return "{\"message\":\"Error interno del servidor\"}";
+            }
         }
     }
 
     // Handlers por ruta
 
-    private ApiGatewayResponseDTO handleStats(ApiGatewayRequestDTO apiGatewayRequestDTO) throws Exception {
+    private String handleStats(ApiGatewayRequestDTO apiGatewayRequestDTO) throws Exception {
         Map<String, String> params = apiGatewayRequestDTO.getQueryStringParameters();
 
         StatsResponseDTO stats;
@@ -59,12 +67,12 @@ public class AnalyticsQueryHandler implements Function<ApiGatewayRequestDTO, Api
             stats = statsService.getGeneralStats();
         }
 
-        return ApiGatewayResponseDTO.ok(objectMapper.writeValueAsString(stats));
+        return objectMapper.writeValueAsString(stats);
     }
 
-    private ApiGatewayResponseDTO handleHotZones() throws Exception {
+    private String handleHotZones() throws Exception {
         List<HotZoneDTO> hotZones = hotZoneService.getHotZones();
-        return ApiGatewayResponseDTO.ok(objectMapper.writeValueAsString(hotZones));
+        return objectMapper.writeValueAsString(hotZones);
     }
 
     // Helpers
