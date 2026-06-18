@@ -77,7 +77,7 @@ jobs:
     if: github.ref == 'refs/heads/develop' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     env:
-      ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+      ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
     steps:
       - name: Checkout
         uses: actions/checkout@v4
