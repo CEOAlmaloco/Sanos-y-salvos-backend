@@ -1,6 +1,6 @@
 package com.javadiseno.sanosysalvos.user.security;
 
-import com.javadiseno.sanosysalvos.user.repository.UserRepository;
+import com.javadiseno.sanosysalvos.user.repositories.UserRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

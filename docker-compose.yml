@@ -108,7 +108,7 @@ services:
       SANOS_USER_SERVICE_URL: http://msvc-user:8081
       SANOS_PET_SERVICE_URL: http://msvc-pet:8083
       SANOS_MEDIA_SERVICE_URL: http://msvc-media:8084
-      EVENTBRIDGE_BUS_NAME: ${EVENTBRIDGE_BUS_NAME:-sanos-y-salvos-bus}
+      EVENTBRIDGE_BUS_NAME: ${EVENTBRIDGE_BUS_NAME:-sanos-events}
       AWS_REGION: ${AWS_REGION:-us-east-1}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}

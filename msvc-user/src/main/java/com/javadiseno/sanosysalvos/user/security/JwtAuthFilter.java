@@ -1,6 +1,6 @@
 package com.javadiseno.sanosysalvos.user.security;
 
-import com.javadiseno.sanosysalvos.user.service.JwtService;
+import com.javadiseno.sanosysalvos.user.services.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

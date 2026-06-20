@@ -1,6 +1,6 @@
 package com.javadiseno.sanosysalvos.pet.client;
 
-import com.javadiseno.sanosysalvos.pet.client.dto.UserSummaryResponse;
+import com.javadiseno.sanosysalvos.pet.client.dtos.UserSummaryResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

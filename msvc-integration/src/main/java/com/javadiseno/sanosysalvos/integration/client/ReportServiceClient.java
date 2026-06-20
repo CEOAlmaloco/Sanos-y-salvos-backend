@@ -1,7 +1,7 @@
 package com.javadiseno.sanosysalvos.integration.client;
 
-import com.javadiseno.sanosysalvos.integration.dto.InternalCreateReportDTO;
-import com.javadiseno.sanosysalvos.integration.dto.ReportSummaryResponse;
+import com.javadiseno.sanosysalvos.integration.dtos.InternalCreateReportDTO;
+import com.javadiseno.sanosysalvos.integration.dtos.ReportSummaryResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

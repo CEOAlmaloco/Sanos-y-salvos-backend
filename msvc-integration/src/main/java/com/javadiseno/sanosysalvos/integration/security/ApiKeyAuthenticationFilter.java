@@ -1,7 +1,7 @@
 package com.javadiseno.sanosysalvos.integration.security;
 
-import com.javadiseno.sanosysalvos.integration.model.InstitutionApiKey;
-import com.javadiseno.sanosysalvos.integration.repository.InstitutionApiKeyRepository;
+import com.javadiseno.sanosysalvos.integration.models.InstitutionApiKey;
+import com.javadiseno.sanosysalvos.integration.repositories.InstitutionApiKeyRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
