@@ -1,6 +1,7 @@
 package com.javadiseno.sanosysalvos.report.controllers;
 
-import com.javadiseno.sanosysalvos.report.models.ReportModel;
+import com.javadiseno.sanosysalvos.report.dtos.ReportMapper;
+import com.javadiseno.sanosysalvos.report.dtos.ReportResponse;
 import com.javadiseno.sanosysalvos.report.services.ReportService;
 import java.util.List;
 import java.util.UUID;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * reportes asociados a una mascota 
+ * reportes asociados a una mascota
  */
 @RestController
 @RequestMapping("/api/v1/pets/{petId}/reports")
@@ -23,14 +24,14 @@ public class PetReportController {
 
     private final ReportService reportService;
 
-    @GetMapping 
-    public Page<ReportModel> page(@PathVariable UUID petId, @PageableDefault(size = 20) Pageable pageable) {
-        return reportService.findByPetId(petId, pageable); 
+    @GetMapping
+    public Page<ReportResponse> page(
+            @PathVariable UUID petId, @PageableDefault(size = 20) Pageable pageable) {
+        return reportService.findByPetId(petId, pageable).map(ReportMapper::toResponse);
     }
 
-    /** lista completa sin paginas osea los mas recientes primero*/
     @GetMapping("/all")
-    public List<ReportModel> listAll(@PathVariable UUID petId) {
-        return reportService.findByPetIdOrderByReportedAtDesc(petId);
+    public List<ReportResponse> listAll(@PathVariable UUID petId) {
+        return ReportMapper.toResponseList(reportService.findByPetIdOrderByReportedAtDesc(petId));
     }
 }

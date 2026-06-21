@@ -7,7 +7,7 @@ import com.javadiseno.sanosysalvos.report.dtos.requests.PatchReportRequest;
 import com.javadiseno.sanosysalvos.report.dtos.requests.ResolveReportRequest;
 import com.javadiseno.sanosysalvos.report.exceptions.ReportException;
 import com.javadiseno.sanosysalvos.report.exceptions.ResourceNotFoundException;
-import com.javadiseno.sanosysalvos.report.mapping.ReportApiMapper;
+import com.javadiseno.sanosysalvos.report.dtos.ReportMapper;
 import com.javadiseno.sanosysalvos.report.messaging.EventBridgePublisher;
 import com.javadiseno.sanosysalvos.report.models.ReportModel;
 import com.javadiseno.sanosysalvos.report.models.ReportModel.ReportStatus;
@@ -163,7 +163,7 @@ public class ReportServiceImpl implements ReportService {
         ReportModel report = reportRepository
                 .findById(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("Report no encontrado: " + reportId));
-        ReportApiMapper.applyPatch(report, patch);
+        ReportMapper.applyPatch(report, patch);
         return reportRepository.save(report);
     }
 
@@ -178,10 +178,10 @@ public class ReportServiceImpl implements ReportService {
         }
         report.setStatus(ReportStatus.CLOSED);
         report.setResolvedAt(Instant.now());
-        if (request != null && request.getNota() != null && !request.getNota().isBlank()) {
-            String tag = request.getMotivo() != null ? "[" + request.getMotivo() + "] " : "[Cierre] ";
+        if (request != null && request.getNote() != null && !request.getNote().isBlank()) {
+            String tag = request.getReason() != null ? "[" + request.getReason() + "] " : "[Cierre] ";
             String prev = report.getDescription() != null ? report.getDescription() + "\n" : "";
-            report.setDescription(prev + tag + request.getNota());
+            report.setDescription(prev + tag + request.getNote());
         }
 
         ReportModel savedReport = reportRepository.save(report);

@@ -1,5 +1,7 @@
 package com.javadiseno.sanosysalvos.report.controllers;
 
+import com.javadiseno.sanosysalvos.report.dtos.ReportMapper;
+import com.javadiseno.sanosysalvos.report.dtos.ReportResponse;
 import com.javadiseno.sanosysalvos.report.exceptions.ReportException;
 import com.javadiseno.sanosysalvos.report.exceptions.ResourceNotFoundException;
 import com.javadiseno.sanosysalvos.report.models.ReportModel;
@@ -24,31 +26,29 @@ public class UserReportController {
 
     private final ReportService reportService;
 
-    /** Requiere {@code Authorization: Bearer &lt;JWT&gt;} (subject = userId). */
+    /** Requiere {@code Authorization: Bearer <JWT>} (subject = userId). */
     @GetMapping("/me/reports")
-    public List<ReportModel> myReports(Authentication authentication) {
+    public List<ReportResponse> myReports(Authentication authentication) {
         if (authentication == null || !(authentication.getPrincipal() instanceof ReportJwtPrincipal p)) {
             throw new ReportException("Autenticación JWT requerida para /me/reports");
         }
-        return reportService.findByReporterUserIdOrderByCreatedAtDesc(p.getUserId());
+        return ReportMapper.toResponseList(
+                reportService.findByReporterUserIdOrderByCreatedAtDesc(p.getUserId()));
     }
 
-    //lista de reportes de un usuario
     @GetMapping("/{userId}/reports")
-    public List<ReportModel> listByUser(@PathVariable UUID userId) {
-        return reportService.findByReporterUserIdOrderByCreatedAtDesc(userId);
+    public List<ReportResponse> listByUser(@PathVariable UUID userId) {
+        return ReportMapper.toResponseList(reportService.findByReporterUserIdOrderByCreatedAtDesc(userId));
     }
 
-    //obtener un reporte de un usuario
     @GetMapping("/{userId}/reports/{reportId}")
-    public ReportModel getByUserAndReport(
-            @PathVariable UUID userId, @PathVariable UUID reportId) {
+    public ReportResponse getByUserAndReport(@PathVariable UUID userId, @PathVariable UUID reportId) {
         ReportModel r = reportService
                 .findById(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("Report no encontrado: " + reportId));
         if (!userId.equals(r.getReporterUserId())) {
             throw new ResourceNotFoundException("Report no encontrado para este usuario");
         }
-        return r;
+        return ReportMapper.toResponse(r);
     }
 }

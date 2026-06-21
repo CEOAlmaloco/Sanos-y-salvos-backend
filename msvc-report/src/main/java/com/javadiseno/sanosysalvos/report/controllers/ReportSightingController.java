@@ -1,10 +1,14 @@
 package com.javadiseno.sanosysalvos.report.controllers;
 
+import com.javadiseno.sanosysalvos.report.dtos.ReportMapper;
+import com.javadiseno.sanosysalvos.report.dtos.SightingResponse;
+import com.javadiseno.sanosysalvos.report.dtos.requests.CreateSightingRequest;
 import com.javadiseno.sanosysalvos.report.exceptions.ResourceNotFoundException;
 import com.javadiseno.sanosysalvos.report.models.ReportModel;
 import com.javadiseno.sanosysalvos.report.models.ReportSighting;
 import com.javadiseno.sanosysalvos.report.services.ReportService;
 import com.javadiseno.sanosysalvos.report.services.SightingService;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -30,13 +34,14 @@ public class ReportSightingController {
     private final SightingService sightingService;
 
     @GetMapping
-    public List<ReportSighting> list(@PathVariable UUID reportId) {
+    public List<SightingResponse> list(@PathVariable UUID reportId) {
         ensureReportExists(reportId);
-        return sightingService.findByReportIdOrderBySpottedAtDesc(reportId);
+        return ReportMapper.toSightingResponseList(
+                sightingService.findByReportIdOrderBySpottedAtDesc(reportId));
     }
 
-    @GetMapping("/{sightingId}") 
-    public ReportSighting getOne(@PathVariable UUID reportId, @PathVariable UUID sightingId) {
+    @GetMapping("/{sightingId}")
+    public SightingResponse getOne(@PathVariable UUID reportId, @PathVariable UUID sightingId) {
         ensureReportExists(reportId);
         ReportSighting s = sightingService
                 .findById(sightingId)
@@ -44,20 +49,21 @@ public class ReportSightingController {
         if (!reportId.equals(s.getReport().getId())) {
             throw new ResourceNotFoundException("Avistamiento no pertenece a este reporte");
         }
-        return s;
+        return ReportMapper.toSightingResponse(s);
     }
 
-    @PostMapping 
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ReportSighting create(@PathVariable UUID reportId, @RequestBody ReportSighting body) {
+    public SightingResponse create(
+            @PathVariable UUID reportId, @Valid @RequestBody CreateSightingRequest body) {
         ReportModel report = reportService
                 .findById(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("Report no encontrado: " + reportId));
-        body.setReport(report);
-        return sightingService.save(body);
+        ReportSighting sighting = ReportMapper.toNewSighting(body, report);
+        return ReportMapper.toSightingResponse(sightingService.save(sighting));
     }
 
-    @DeleteMapping("/{sightingId}") 
+    @DeleteMapping("/{sightingId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID reportId, @PathVariable UUID sightingId) {
         getOne(reportId, sightingId);

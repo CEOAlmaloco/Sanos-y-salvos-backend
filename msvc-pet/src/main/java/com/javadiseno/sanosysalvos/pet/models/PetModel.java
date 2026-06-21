@@ -1,8 +1,6 @@
 package com.javadiseno.sanosysalvos.pet.models;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -39,20 +37,15 @@ public class PetModel {
     @Column(name = "owner_user_id")
     private UUID ownerUserId;
 
-    @NotBlank
-    @Size(max = 120)
     @Column(name = "name", nullable = false, length = 120)
     private String name;
 
-    @Size(max = 80)
     @Column(name = "species", length = 80)
     private String species;
 
-    @Size(max = 80)
     @Column(name = "breed", length = 80)
     private String breed;
 
-    @Size(max = 60)
     @Column(name = "color", length = 60)
     private String color;
 
@@ -68,7 +61,6 @@ public class PetModel {
     /**
      * Chip se identificara cmo esto
      */
-    @Size(max = 64)
     @Column(name = "microchip_number", unique = true, length = 64)
     private String microchipNumber;
 

@@ -22,16 +22,14 @@ import com.javadiseno.sanosysalvos.media.dtos.PresignPutResponse;
 import com.javadiseno.sanosysalvos.media.services.MediaStorageService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/media")
+@RequiredArgsConstructor
 public class MediaController {
 
     private final MediaStorageService mediaStorageService;
-
-    public MediaController(MediaStorageService mediaStorageService) {
-        this.mediaStorageService = mediaStorageService;
-    }
 
     @GetMapping("/health")
     public String health() {
