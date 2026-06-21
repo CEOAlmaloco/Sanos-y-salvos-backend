@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -16,12 +18,20 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 @Configuration
 @EnableConfigurationProperties(S3StorageProperties.class)
 public class S3Config {
-    //s3Client es el que se conecta a S3/MinIO
+
+    private static AwsCredentialsProvider credentialsProvider(S3StorageProperties p) {
+        if (p.getAccessKey() != null && !p.getAccessKey().isBlank()
+                && p.getSecretKey() != null && !p.getSecretKey().isBlank()) {
+            return StaticCredentialsProvider.create(
+                    AwsBasicCredentials.create(p.getAccessKey(), p.getSecretKey()));
+        }
+        return DefaultCredentialsProvider.create();
+    }
+
     @Bean
     public S3Client s3Client(S3StorageProperties p) {
         var builder = S3Client.builder()
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(p.getAccessKey(), p.getSecretKey())))
+                .credentialsProvider(credentialsProvider(p))
                 .region(Region.of(p.getRegion()))
                 .serviceConfiguration(S3Configuration.builder()
                         .pathStyleAccessEnabled(p.isPathStyleAccess())
@@ -31,12 +41,10 @@ public class S3Config {
         }
         return builder.build();
     }
-    //s3Presigner es el que genera las URLs firmadas (GET/PUT)
     @Bean
     public S3Presigner s3Presigner(S3StorageProperties p) {
         var builder = S3Presigner.builder()
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(p.getAccessKey(), p.getSecretKey())))
+                .credentialsProvider(credentialsProvider(p))
                 .region(Region.of(p.getRegion()))
                 .serviceConfiguration(S3Configuration.builder()
                         .pathStyleAccessEnabled(p.isPathStyleAccess())
