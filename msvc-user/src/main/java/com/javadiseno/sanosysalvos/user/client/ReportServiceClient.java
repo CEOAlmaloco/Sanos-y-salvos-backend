@@ -1,6 +1,6 @@
 package com.javadiseno.sanosysalvos.user.client;
 
-import com.javadiseno.sanosysalvos.user.client.dto.ReportSummaryResponse;
+import com.javadiseno.sanosysalvos.user.client.dtos.ReportSummaryResponse;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.cloud.openfeign.FeignClient;

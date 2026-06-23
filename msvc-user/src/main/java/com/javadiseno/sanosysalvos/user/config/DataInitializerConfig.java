@@ -1,8 +1,8 @@
 package com.javadiseno.sanosysalvos.user.config;
 
-import com.javadiseno.sanosysalvos.user.model.Role;
-import com.javadiseno.sanosysalvos.user.model.User;
-import com.javadiseno.sanosysalvos.user.repository.UserRepository;
+import com.javadiseno.sanosysalvos.user.models.Role;
+import com.javadiseno.sanosysalvos.user.models.User;
+import com.javadiseno.sanosysalvos.user.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;

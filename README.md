@@ -1,35 +1,209 @@
-# Sanos y Salvos - Microservicios Backend
+# Sanos y Salvos — Backend (Java / Spring Boot)
 
-Backend monorepo Java/Spring Boot con APIs REST, JWT, PostgreSQL y MinIO.
+APIs REST, JWT, Docker, CI/CD y despliegue cloud-native (ECS, Lambda, SQS, API Gateway).
 
-## Estado actual
+## Estructura del monorepo
 
-Hoy están funcionales 5 microservicios:
-
-| Servicio | Puerto local |
-| --- | --- |
-| `msvc-user` | `8081` |
-| `msvc-report` | `8082` |
-| `msvc-pet` | `8083` |
-| `msvc-media` | `8084` |
-| `msvc-integration` | `8085` |
-
-Los módulos `msvc-matching`, `msvc-notification` y `msvc-analytics` están pensados para una siguiente etapa.
-
-## Versión actual
+```text
+Sanos-y-salvos-backend/
+├── pom.xml                      ← POM padre (Spring Boot 4.0.5, Java 21)
+├── msvc-user/                   ← usuarios y autenticación (8081)
+├── msvc-pet/                    ← mascotas (8083)
+├── msvc-report/                 ← reportes y EventBridge (8082)
+├── msvc-media/                  ← fotos MinIO/S3 (8084)
+├── msvc-integration/            ← API externa con X-Api-Key (8085)
+├── msvc-matching/               ← Lambda: matching + Rekognition
+├── msvc-notification/           ← Lambda: alertas SNS
+├── msvc-analytics/              ← Lambda: consumidor SQS + API stats
+├── docker/                      ← Dockerfiles por microservicio
+├── docker-compose.yml           ← entorno local
+├── docker-compose.swarm.yml     ← stack Docker Swarm
+├── .github/workflows/ci-cd.yml  ← pipeline CI/CD
+└── postman/                     ← colecciones de prueba
+```
 
 | Componente | Versión |
-| --- | --- |
-| Proyecto | `1.0.0` |
-| Spring Boot | `4.0.5` |
-| Java | `21` |
-| Spring Cloud BOM | `2025.1.0` |
+| ------------ | ------- |
+| Spring Boot | 4.0.5 |
+| Java | 21 |
+| Spring Cloud BOM | 2025.1.0 |
+
+Puertos internos: user **8081**, report **8082**, pet **8083**, media **8084**, integration **8085**.
 
 ## Requisitos
 
 - JDK 21
-- Maven
+- Maven 3.9+
 - Docker Desktop
+
+```bash
+mvn clean verify
+mvn -pl msvc-user spring-boot:run
+```
+
+## Configuración local (Docker Compose)
+
+Requiere archivo `.env` en la raíz (copiar desde `.env.example`).
+
+```bash
+cp .env.example .env
+# Editar .env con JWT_SECRET, credenciales Postgres y MinIO
+
+docker compose up --build -d
+docker compose ps
+```
+
+Servicios levantados:
+
+| Servicio | Puerto host | Descripción |
+|----------|-------------|-------------|
+| msvc-user | 9081 | Auth y usuarios |
+| msvc-report | 9082 | Reportes |
+| msvc-pet | 9083 | Mascotas |
+| msvc-media | 9084 | Upload/presign (MinIO local) |
+| msvc-integration | 9085 | Integración externa |
+| postgres | 5433 | PostgreSQL compartido |
+| minio | 9000 / 9001 | S3 local |
+
+Pruebas con Postman: colección `postman/Sanos-y-Salvos-User-Pet-Report.postman_collection.json`.
+
+Flujo mínimo: `POST /api/v1/auth/login` → `POST /api/v1/pets` → `POST /api/v1/reports`.
+
+## Dockerfiles (IE1)
+
+Cada microservicio HTTP tiene un Dockerfile multi-stage en `docker/`:
+
+| Archivo | Imagen |
+|---------|--------|
+| `docker/Dockerfile.msvc-user` | `sanos/msvc-user:latest` |
+| `docker/Dockerfile.msvc-pet` | `sanos/msvc-pet:latest` |
+| `docker/Dockerfile.msvc-report` | `sanos/msvc-report:latest` |
+| `docker/Dockerfile.msvc-media` | `sanos/msvc-media:latest` |
+| `docker/Dockerfile.msvc-integration` | `sanos/msvc-integration:latest` |
+
+Patrón: stage `maven:3.9-eclipse-temurin-21-alpine` para compilar, stage `eclipse-temurin:21-jre-alpine` para ejecutar el JAR.
+
+## Docker Swarm (IE7 / IE8)
+
+### 1. Construir imágenes locales
+
+```bash
+docker build -f docker/Dockerfile.msvc-user -t sanos/msvc-user:latest .
+docker build -f docker/Dockerfile.msvc-pet -t sanos/msvc-pet:latest .
+docker build -f docker/Dockerfile.msvc-report -t sanos/msvc-report:latest .
+docker build -f docker/Dockerfile.msvc-media -t sanos/msvc-media:latest .
+docker build -f docker/Dockerfile.msvc-integration -t sanos/msvc-integration:latest .
+```
+
+### 2. Inicializar Swarm y desplegar stack
+
+```bash
+docker swarm init
+docker stack deploy -c docker-compose.swarm.yml sanos
+docker service ls
+```
+
+En PowerShell, exporta variables antes del deploy:
+
+```powershell
+Get-Content .env | ForEach-Object {
+  if ($_ -match '^\s*([^#][^=]+)=(.*)$') { Set-Item -Path "env:$($matches[1])" -Value $matches[2] }
+}
+docker stack deploy -c docker-compose.swarm.yml sanos
+```
+
+### 3. Escalar réplicas (demo IE8)
+
+```bash
+docker service scale sanos_msvc-user=3
+docker service ps sanos_msvc-user
+```
+
+### 4. Añadir nodo worker (opcional)
+
+En el manager:
+
+```bash
+docker swarm join-token worker
+```
+
+En otra máquina con Docker:
+
+```bash
+docker swarm join --token <TOKEN> <IP_MANAGER>:2377
+```
+
+### 5. Detener stack
+
+```bash
+docker stack rm sanos
+```
+
+Puertos expuestos en Swarm: **9081** user, **9082** report, **9083** pet, **9084** media, **9085** integration.
+
+## CI/CD (IE4 / IE5 / IE6)
+
+Workflow: `.github/workflows/ci-cd.yml`
+
+Se dispara con push o PR a `develop`/`main`, y con `workflow_dispatch`.
+
+| Job | Descripción |
+|-----|-------------|
+| **Build y tests** | `mvn verify` en todo el monorepo |
+| **Empaquetar JARs Lambda** | Shade de matching, notification y analytics |
+| **Desplegar en AWS** | Solo en push a `develop` (no en PR) |
+
+El job de deploy ejecuta, de forma idempotente:
+
+1. Crear bucket **S3** `sanos-media-prod` (si no existe)
+2. Crear cola **SQS** `sanos-analytics-queue` (si no existe)
+3. Crear tabla **DynamoDB** `sanos-analytics` (si no existe)
+4. Build y push de imágenes a **ECR** (5 microservicios)
+5. Publicar JARs Lambda en S3 y actualizar funciones
+6. Force deployment de servicios **ECS** (`sanos-svc-*`)
+
+Secrets requeridos en GitHub Actions:
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_ACCOUNT_ID`
+- `AWS_SESSION_TOKEN` (credenciales temporales del lab AWS Academy)
+
+## AWS — arquitectura (lab)
+
+| Componente | Servicio AWS |
+|------------|--------------|
+| Microservicios HTTP | **ECS Fargate** (`sanos-cluster`) detrás de ALB |
+| Entrada pública | **API Gateway** → ALB / Lambda |
+| Datos transaccionales | **RDS PostgreSQL** (`sanos-postgres-primary`) |
+| Fotos | **S3** `sanos-media-prod` |
+| Eventos de dominio | **EventBridge** bus `sanos-events` |
+| Cola asíncrona | **SQS** `sanos-analytics-queue` |
+| Matching + métricas | **DynamoDB** `sanos-analytics` |
+| Alertas | **SNS** |
+
+Guía de despliegue S3 + media en ECS: [`aws/PASO-2-S3-MEDIA-ECS.md`](aws/PASO-2-S3-MEDIA-ECS.md).
+
+## Funciones serverless (IE10 / IE13)
+
+| Función Lambda | Módulo | Trigger | Rol |
+|----------------|--------|---------|-----|
+| `sanos-matching` | `msvc-matching` | EventBridge | Indexa reportes, busca coincidencias (Rekognition + S3) |
+| `sanos-notification` | `msvc-notification` | EventBridge | Publica alertas en SNS |
+| `sanos-analytics` | `msvc-analytics` | SQS | Persiste métricas en DynamoDB |
+| `sanos-analytics-api` | `msvc-analytics` | API Gateway | `GET /analytics/stats`, `/analytics/hot-zones` |
+
+Flujo al crear un reporte:
+
+```text
+msvc-report (ECS)
+  → EventBridge (sanos-events, evento pet_reported)
+    → SQS sanos-analytics-queue → Lambda sanos-analytics → DynamoDB
+    → Lambda sanos-matching (paralelo)
+    → Lambda sanos-notification → SNS (paralelo)
+```
+
+Prueba E2E en AWS: colección `postman/Sanos-y-Salvos-AWS.postman_collection.json` + environment `Sanos-y-Salvos-AWS.postman_environment.json`. Activar environment y ejecutar carpeta `00 - Flujo E2E AWS (IE15)`.
 
 ## Estrategia de ramas
 
@@ -37,280 +211,101 @@ El proyecto usa un flujo de trabajo ambientado en multiples entornos:
 
 ### Ramas principales
 
-- `main`: Producción, código estable
-- `staging`: Pre-producción, validación final antes de producción
-- `qa`: Testing, pruebas funcionales
+- `main`: Producción (codigo éstable)
+- `staging`: Pre-producción (validación final antes de producción)
+- `qa`: Testing(pruebas funcionales)
 - `develop`: Desarrollo
 
 ### Ramas de trabajo
 
-Todas las ramas de trabajo se crean desde `develop`:
-
+Todas las ramas de trabajo se crearan desde `develop`:
 - `feature/nombre-feature`: nuevas funcionalidades
 - `fix/nombre-bug`: corrección de errores
 - `chore/nombre-tarea`: tareas técnicas
 
-Ejemplos:
+#### Ejemplos:
 
 - `feature/pet-report`
 - `fix/register-error`
 - `chore/update-deps`
 
-## Flujo de trabajo
+## Flujo de Trabajo
 
 ### 1. Desarrollo
-
 ```bash
 git checkout develop
 git pull origin develop
 git checkout -b feature/nueva-funcionalidad
 ```
-
 ### 2. Integración
-
 - Pull Request: `feature/*` -> `develop`
 - Revisión obligatoria
-
 ### 3. Testing (QA)
-
 - Pull Request: `develop` -> `qa`
 - Se realizan pruebas funcionales
-
 ### 4. Pre-producción
-
 - Pull Request: `qa` -> `staging`
-- Validación final: bugs críticos, configuración y rendimiento básico
-
+- Validación final (bugs críticos, configuración, rendimiento básico)
 ### 5. Producción
-
 - Pull Request: `staging` -> `main`
 - Código estable listo para deploy
 
-## Cómo levantar el proyecto
+## Convención de Commits
 
-La forma recomendada es con Docker usando `docker-compose.yml`. Esto es necesario para levantar correctamente MinIO y el servicio de media.
+Se utilizaran **Conventional Commits** para estructurar los mensajes de Commit en Git. Esto permitira que sean faciles de leer para el Desarrollador.
 
+### Formato
 ```bash
-docker compose up --build
+tipo: descripción
 ```
 
-Si prefieres correr los microservicios de forma manual, también funcionan, pero debes tener levantados PostgreSQL y MinIO, además de configurar las variables de entorno de cada servicio.
+### Tipos
+- `feat`: nueva funcionalidad
+- `fix`: corrección de bug
+- `chore`: tareas internas
+- `docs`: documentación
+- `refactor`: mejora de código
 
-Importante: si ejecutas los microservicios manualmente desde IntelliJ sin Docker/MinIO, el `msvc-media` no funcionará correctamente.
-
-## Variables de entorno
-
-El proyecto usa un archivo `.env` en la raíz. Debe incluir, como mínimo, estas variables:
-
-| Variable | Uso |
-| --- | --- |
-| `POSTGRES_USER` | Usuario de PostgreSQL |
-| `POSTGRES_PASSWORD` | Contraseña de PostgreSQL |
-| `POSTGRES_DB` | Nombre de la base de datos |
-| `JWT_SECRET` | Secreto compartido para JWT |
-| `JWT_EXPIRATION_MS` | Tiempo de expiración del token |
-| `MINIO_ROOT_USER` | Usuario root de MinIO |
-| `MINIO_ROOT_PASSWORD` | Contraseña root de MinIO |
-| `MINIO_PRESIGN_ENDPOINT` | Endpoint público de MinIO para URLs firmadas |
-| `SANOS_MEDIA_BUCKET` | Bucket usado por el servicio de media |
-
-Valores por defecto usados por Docker:
-
-| Servicio | URL interna |
-| --- | --- |
-| PostgreSQL | `postgres:5432` |
-| MinIO | `http://minio:9000` |
-| User | `http://msvc-user:8081` |
-| Report | `http://msvc-report:8082` |
-| Pet | `http://msvc-pet:8083` |
-| Media | `http://msvc-media:8084` |
-
-## Puertos expuestos en Docker
-
-| Servicio | Puerto del host |
-| --- | --- |
-| PostgreSQL | `5433` |
-| MinIO API | `9000` |
-| MinIO Console | `9001` |
-| `msvc-user` | `9081` |
-| `msvc-report` | `9082` |
-| `msvc-pet` | `9083` |
-| `msvc-media` | `9084` |
-| `msvc-integration` | `9085` |
-
-## Base de datos
-
-El compose ejecuta el script `docker/init-db.sql`, que crea los esquemas necesarios para `users_schema`, `pets_schema` e `integrations_schema`.
-
-## Integration Service
-
-El servicio de integración expone `POST /api/v1/integration/reports` y protege el acceso con una API key enviada en el header `X-Api-Key`.
-
-Antes de probarlo, hay que crear manualmente un registro en la tabla `integrations_schema.institution_api_keys`.
-
-### Paso a paso para cargar la API key
-
-1. Levanta el proyecto con Docker.
-2. Registra primero un usuario en el sistema y copia su `id`.
-
-Endpoint:
-
-```bash
-POST /api/v1/auth/register
-```
-
-Body de ejemplo:
-
-```json
-{
-	"name": "Camila",
-	"lastName": "Rojas",
-	"email": "camila.rojas@veterinarialasheras.cl",
-  "password": "Password123",
-  "confirmPassword": "Password123",
-	"phone": "+56987654321"
-}
-```
-
-3. Entra a PostgreSQL desde tu cliente SQL favorito, desde el contenedor o desde IntelliJ creando un datasource PostgreSQL.
-
-	En IntelliJ:
-	- Abre la ventana `Database`.
-	- Agrega un datasource `PostgreSQL`.
-	- Usa `localhost` como host.
-	- Usa el puerto `5433`.
-	- Usa el valor de `POSTGRES_DB`, `POSTGRES_USER` y `POSTGRES_PASSWORD` definidos en tu `.env`.
-	- Prueba la conexión y luego ejecuta el `INSERT` de `institution_api_keys`.
-4. Inserta un registro en `integrations_schema.institution_api_keys` con estos campos:
-	- `id`
-	- `institution_name`
-	- `api_key`
-	- `user_id`
-	- `created_at`
-	- en `user_id` debes pegar el `id` del usuario creado en el paso anterior
-5. Guarda el valor de `api_key`, porque ese será el que luego debes enviar en el header `X-Api-Key`.
-
-Ejemplo de SQL:
-
-```sql
-INSERT INTO integrations_schema.institution_api_keys (
-    id, 
-    institution_name, 
-    api_key, 
-    user_id, 
-    created_at
-)
-VALUES (
-           '11111111-1111-1111-1111-111111111111',
-           'Veterinaria Las Heras',
-           'vet-las-heras-key-2024',
-           'ID_DE_USUARIO_CREADO',
-           CURRENT_TIMESTAMP
-       );
-```
-
-### Cómo crear un reporte desde Integration Service
-
-Endpoint:
-
-```bash
-POST /api/v1/integration/reports
-```
-
-Headers:
-
-```bash
-X-Api-Key: vet-las-heras-key-2024
-Content-Type: application/json
-```
-
-Body de ejemplo:
-
-```json
-{
-	"externalReportId": "EXT-001",
-	"reportType": "LOST",
-	"petId": "3c1d7d6f-3f8a-4d7b-9d6e-2a8f8a3f4b21",
-	"title": "Perro perdido en parque",
-	"description": "Se perdió cerca del parque central.",
-	"latitude": -33.4489,
-	"longitude": -70.6693,
-	"locationText": "Parque central, sector oriente",
-	"eventDate": "2026-05-05T10:30:00"
-}
-```
-
-La respuesta crea el reporte interno en el servicio de reportes y devuelve el `externalReportId`, el `internalReportId` y un mensaje de confirmación.
-
-## Ejecución manual por servicio
-
-Si no usas Docker, los servicios principales se levantan en estos puertos:
-
-- `msvc-user`: `8081`
-- `msvc-report`: `8082`
-- `msvc-pet`: `8083`
-- `msvc-media`: `8084`
-- `msvc-integration`: `8085`
-
-En ese caso debes configurar las mismas variables de entorno que usa `docker-compose.yml`, especialmente `JWT_SECRET`, `POSTGRES_*` y las credenciales de MinIO para `msvc-media`.
-
-Si corres manualmente desde IntelliJ y no levantas MinIO, el servicio `msvc-media` quedará fuera de funcionamiento.
-
-## Postman Global
-
-En la carpeta `postman/` está la colección global `PostmanGlobal.json`, que reúne las peticiones de cada microservicio en un solo archivo.
-
-La colección incluye los flujos de `msvc-user`, `msvc-pet`, `msvc-report`, `msvc-media` e `msvc-integration`, con variables listas para usar en local o en Docker.
-
-Si el proyecto está levantado con Docker, usa los puertos del host `9081` a `9085`. Si lo ejecutas directo desde IntelliJ o desde el IDE, usa los puertos locales `8081` a `8085`.
+#### Ejemplos:
+- `feat: add pet report creation`
+- `fix: resolve authentication error`
+- `docs: update git workflow`
 
 ## Protección de ramas
 
 ### `main`
-
 - Pull Request obligatorio
 - mínimo 1 aprobación
 - sin push directo
-
+  
 ### `staging`
-
 - Pull Request obligatorio
 - mínimo 1 aprobación
-
+  
 ### `qa`
-
 - Pull Request obligatorio
 - mínimo 1 aprobación
-
+  
 ### `develop`
-
-- Pull Request obligatorio, recomendado
-
+- Pull Request obligatorio (recomendado)
+  
 ## Checklist de Pull Request
-
 - Código probado
 - No rompe funcionalidades existentes
 - Sigue convención de commits
 - PR revisado por al menos 1 integrante
 - Rama actualizada con la base
 
-## Buenas prácticas
+## Notas adicionales
 
+- Los datos en H2 (perfil `dev`) **se pierden al reiniciar** el servicio.
+- El bucket MinIO (`sanos-media`) se crea al primer upload en local.
+- **SY-62 (notificaciones):** implementación **broadcast vía SNS**; filtrado geo-radio queda como mejora futura.
+- API key demo integración: `vet-las-heras-key-2024` (header `X-Api-Key`). Seed manual en `db/data.sql`.
+- Seed de institución: ejecutar `db/data.sql` en PostgreSQL reemplazando `ID_DE_USUARIO_CREADO` por un UUID de usuario registrado.
+
+## Buenas prácticas
 - No trabajar directamente en ramas principales
 - Mantener PR pequeños y claros
 - Hacer commits descriptivos
 - Eliminar ramas después del merge
-
-## Convención de commits
-
-Se usa Conventional Commits:
-
-```bash
-tipo: descripción
-```
-
-Ejemplos:
-
-- `feat: add pet report creation`
-- `fix: resolve authentication error`
-- `docs: update git workflow`

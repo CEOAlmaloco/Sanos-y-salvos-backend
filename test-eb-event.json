@@ -1,0 +1,8 @@
+[
+  {
+    "Source": "com.sanosysalvos.report",
+    "DetailType": "pet_reported",
+    "Detail": "{\"reportId\":\"ae049d68-ca1d-48d7-97d6-bb320347b285\",\"petId\":\"3d5dd843-ecb4-446e-b770-1d703ce3607b\",\"userId\":\"269a72c1-82fd-42ab-a6c7-cc102862c32b\",\"latitude\":-33.4489,\"longitude\":-70.6693,\"eventDate\":\"2026-06-18T20:00:00Z\"}",
+    "EventBusName": "sanos-events"
+  }
+]

@@ -115,6 +115,17 @@
 			<artifactId>eventbridge</artifactId>
 		</dependency>
 
+		<!-- ── Serialización ─────────────────────── -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+		</dependency>
+
 		<!-- JWT: Necesario para parsear y validar tokens JWT -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>

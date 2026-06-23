@@ -1,0 +1,173 @@
+# Docker Swarm — despliegue del stack "sanos" (IE7 / IE8)
+#
+# Requisitos:
+#   1. docker swarm init
+#   2. Construir imágenes locales (ver README → Docker Swarm)
+#   3. Variables de .env exportadas en la shell antes del deploy
+#
+#   docker stack deploy -c docker-compose.swarm.yml sanos
+#   docker service ls
+#   docker service scale sanos_msvc-user=3
+
+version: "3.8"
+
+networks:
+  sanos-net:
+    driver: overlay
+    attachable: true
+
+volumes:
+  minio_data:
+  postgres_data:
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - sanos-net
+    ports:
+      - "5433:5432"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role == manager
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    networks:
+      - sanos-net
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  msvc-media:
+    image: sanos/msvc-media:latest
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_PRESIGN_ENDPOINT: ${MINIO_PRESIGN_ENDPOINT:-http://localhost:9000}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      SANOS_MEDIA_BUCKET: ${SANOS_MEDIA_BUCKET:-sanos-media}
+    networks:
+      - sanos-net
+    ports:
+      - "9084:8084"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  msvc-user:
+    image: sanos/msvc-user:latest
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      SANOS_PET_SERVICE_URL: http://msvc-pet:8083
+      SANOS_REPORT_SERVICE_URL: http://msvc-report:8082
+      SANOS_MEDIA_SERVICE_URL: http://msvc-media:8084
+    networks:
+      - sanos-net
+    ports:
+      - "9081:8081"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  msvc-pet:
+    image: sanos/msvc-pet:latest
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      SANOS_USER_SERVICE_URL: http://msvc-user:8081
+      SANOS_REPORT_SERVICE_URL: http://msvc-report:8082
+      SANOS_MEDIA_SERVICE_URL: http://msvc-media:8084
+    networks:
+      - sanos-net
+    ports:
+      - "9083:8083"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  msvc-report:
+    image: sanos/msvc-report:latest
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      SANOS_USER_SERVICE_URL: http://msvc-user:8081
+      SANOS_PET_SERVICE_URL: http://msvc-pet:8083
+      SANOS_MEDIA_SERVICE_URL: http://msvc-media:8084
+      EVENTBRIDGE_BUS_NAME: ${EVENTBRIDGE_BUS_NAME:-sanos-events}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+    networks:
+      - sanos-net
+    ports:
+      - "9082:8082"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  msvc-integration:
+    image: sanos/msvc-integration:latest
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      SANOS_REPORT_SERVICE_URL: http://msvc-report:8082
+      SANOS_MEDIA_SERVICE_URL: http://msvc-media:8084
+    networks:
+      - sanos-net
+    ports:
+      - "9085:8085"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure

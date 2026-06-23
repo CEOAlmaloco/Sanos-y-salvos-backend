@@ -1,10 +1,14 @@
 package com.javadiseno.sanosysalvos.report.controllers;
 
+import com.javadiseno.sanosysalvos.report.dtos.MediaLinkResponse;
+import com.javadiseno.sanosysalvos.report.dtos.ReportMapper;
+import com.javadiseno.sanosysalvos.report.dtos.requests.CreateMediaLinkRequest;
 import com.javadiseno.sanosysalvos.report.exceptions.ResourceNotFoundException;
 import com.javadiseno.sanosysalvos.report.models.ReportMedia;
 import com.javadiseno.sanosysalvos.report.models.ReportModel;
 import com.javadiseno.sanosysalvos.report.services.MediaService;
 import com.javadiseno.sanosysalvos.report.services.ReportService;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -27,13 +31,14 @@ public class ReportMediaController {
     private final MediaService mediaService;
 
     @GetMapping
-    public List<ReportMedia> list(@PathVariable UUID reportId) {
+    public List<MediaLinkResponse> list(@PathVariable UUID reportId) {
         ensureReportExists(reportId);
-        return mediaService.findByReportIdOrderBySortOrderAscCreatedAtAsc(reportId);
+        return ReportMapper.toMediaLinkResponseList(
+                mediaService.findByReportIdOrderBySortOrderAscCreatedAtAsc(reportId));
     }
 
     @GetMapping("/{mediaId}")
-    public ReportMedia getOne(@PathVariable UUID reportId, @PathVariable UUID mediaId) {
+    public MediaLinkResponse getOne(@PathVariable UUID reportId, @PathVariable UUID mediaId) {
         ensureReportExists(reportId);
         ReportMedia m = mediaService
                 .findById(mediaId)
@@ -41,19 +46,19 @@ public class ReportMediaController {
         if (!reportId.equals(m.getReport().getId())) {
             throw new ResourceNotFoundException("El medio no pertenece a este reporte");
         }
-        return m;
+        return ReportMapper.toMediaLinkResponse(m);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ReportMedia create(@PathVariable UUID reportId, @RequestBody ReportMedia body) {
+    public MediaLinkResponse create(
+            @PathVariable UUID reportId, @Valid @RequestBody CreateMediaLinkRequest body) {
         ReportModel report = reportService
                 .findById(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("Report no encontrado: " + reportId));
-        body.setReport(report);
-        return mediaService.save(body);
+        ReportMedia media = ReportMapper.toNewMediaLink(body, report);
+        return ReportMapper.toMediaLinkResponse(mediaService.save(media));
     }
-
 
     @DeleteMapping("/{mediaId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -62,7 +67,6 @@ public class ReportMediaController {
         mediaService.deleteById(mediaId);
     }
 
-    //verificar que el reporte existe para no crear un medio sin reporte
     private void ensureReportExists(UUID reportId) {
         if (reportService.findById(reportId).isEmpty()) {
             throw new ResourceNotFoundException("Report no encontrado: " + reportId);

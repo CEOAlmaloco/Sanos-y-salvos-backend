@@ -38,7 +38,7 @@
 
 		<!-- ── Runtime Lambda ────────────────────────────────────────────
 			 Analytics consume TODOS los eventos del bus (pet_reported,
-			 pet_found, match_found, pet_recovered) para construir
+			 pet_found, match_found) para construir
 			 métricas históricas y mapas de calor por zona.
 			 Los datos se leen desde una API
 			 en Report Service o directamente desde DynamoDB.
@@ -48,10 +48,21 @@
 			<artifactId>spring-cloud-function-adapter-aws</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-lambda-java-events</artifactId>
+			<version>3.11.5</version>
+		</dependency>
+
 		<!-- ── Serialización ─────────────────────── -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
 		</dependency>
 
 		<!-- ── AWS SDK v2: DynamoDB ───────────────────────────────────────
@@ -65,13 +76,14 @@
 			<artifactId>dynamodb</artifactId>
 		</dependency>
 
-		<!-- ── Redis client ────────────────────
-             Cachear resultados de zonas calientes (hot zones)
-             que se recalcularían en cada consulta del mapa de calor.
-        ──────────────────────────────────────────────────────────────── -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>dynamodb-enhanced</artifactId>
+		</dependency>
+
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
         </dependency>
     </dependencies>
 
@@ -86,7 +98,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.5.3</version>
+				<version>3.3.0</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -107,8 +119,6 @@
 								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
 									<resource>META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"/>
 							</transformers>
 						</configuration>
 					</execution>

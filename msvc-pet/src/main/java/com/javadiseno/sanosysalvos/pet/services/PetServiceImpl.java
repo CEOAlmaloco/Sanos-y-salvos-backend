@@ -1,8 +1,8 @@
 package com.javadiseno.sanosysalvos.pet.services;
 
 import com.javadiseno.sanosysalvos.pet.client.UserServiceClient;
-import com.javadiseno.sanosysalvos.pet.exception.PetAccessDeniedException;
-import com.javadiseno.sanosysalvos.pet.exception.PetNotFoundException;
+import com.javadiseno.sanosysalvos.pet.exceptions.PetAccessDeniedException;
+import com.javadiseno.sanosysalvos.pet.exceptions.PetNotFoundException;
 import com.javadiseno.sanosysalvos.pet.models.PetModel;
 import com.javadiseno.sanosysalvos.pet.repositories.PetRepository;
 import feign.FeignException;

@@ -1,10 +1,10 @@
 package com.javadiseno.sanosysalvos.pet.controllers;
 
-import com.javadiseno.sanosysalvos.pet.dto.PetCreateRequest;
-import com.javadiseno.sanosysalvos.pet.dto.PetMapper;
-import com.javadiseno.sanosysalvos.pet.dto.PetResponse;
-import com.javadiseno.sanosysalvos.pet.dto.PetUpdateRequest;
-import com.javadiseno.sanosysalvos.pet.exception.PetAccessDeniedException;
+import com.javadiseno.sanosysalvos.pet.dtos.PetCreateRequest;
+import com.javadiseno.sanosysalvos.pet.dtos.PetMapper;
+import com.javadiseno.sanosysalvos.pet.dtos.PetResponse;
+import com.javadiseno.sanosysalvos.pet.dtos.PetUpdateRequest;
+import com.javadiseno.sanosysalvos.pet.exceptions.PetAccessDeniedException;
 import com.javadiseno.sanosysalvos.pet.services.PetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

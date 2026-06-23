@@ -1,6 +1,6 @@
 package com.javadiseno.sanosysalvos.pet.client;
 
-import com.javadiseno.sanosysalvos.pet.client.dto.ReportLiteResponse;
+import com.javadiseno.sanosysalvos.pet.client.dtos.ReportLiteResponse;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.cloud.openfeign.FeignClient;

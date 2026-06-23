@@ -1,0 +1,43 @@
+{
+  "family": "sanos-task-media",
+  "taskRoleArn": "arn:aws:iam::505494421794:role/LabRole",
+  "executionRoleArn": "arn:aws:iam::505494421794:role/LabRole",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "containerDefinitions": [
+    {
+      "name": "msvc-media",
+      "image": "505494421794.dkr.ecr.us-east-1.amazonaws.com/sanos/msvc-media:latest",
+      "cpu": 0,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8084,
+          "hostPort": 8084,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "environment": [
+        { "name": "SPRING_PROFILES_ACTIVE", "value": "aws" },
+        { "name": "SANOS_MEDIA_BUCKET", "value": "sanos-media-prod" },
+        { "name": "AWS_REGION", "value": "us-east-1" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/sanos-media",
+          "awslogs-create-group": "true",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

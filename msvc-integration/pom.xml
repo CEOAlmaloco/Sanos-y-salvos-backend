@@ -98,15 +98,6 @@
 			<artifactId>spring-cloud-starter-openfeign</artifactId>
 		</dependency>
 
-		<!-- ── AWS EventBridge ───────────────────────────────────────────
-             Integration Service puede publicar eventos cuando un reporte
-             externo pasa la validación y transformación.
-        ──────────────────────────────────────────────────────────────── -->
-		<dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>eventbridge</artifactId>
-		</dependency>
-
 		<!-- JWT: Necesario para la generación de tokens y validación -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>

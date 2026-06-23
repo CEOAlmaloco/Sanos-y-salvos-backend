@@ -2,11 +2,13 @@ package com.javadiseno.sanosysalvos.report.services;
 
 import com.javadiseno.sanosysalvos.report.client.PetServiceClient;
 import com.javadiseno.sanosysalvos.report.client.UserServiceClient;
+import com.javadiseno.sanosysalvos.report.dtos.ReportEventDTO;
 import com.javadiseno.sanosysalvos.report.dtos.requests.PatchReportRequest;
 import com.javadiseno.sanosysalvos.report.dtos.requests.ResolveReportRequest;
 import com.javadiseno.sanosysalvos.report.exceptions.ReportException;
 import com.javadiseno.sanosysalvos.report.exceptions.ResourceNotFoundException;
-import com.javadiseno.sanosysalvos.report.mapping.ReportApiMapper;
+import com.javadiseno.sanosysalvos.report.dtos.ReportMapper;
+import com.javadiseno.sanosysalvos.report.messaging.EventBridgePublisher;
 import com.javadiseno.sanosysalvos.report.models.ReportModel;
 import com.javadiseno.sanosysalvos.report.models.ReportModel.ReportStatus;
 import com.javadiseno.sanosysalvos.report.repositories.ReportRepository;
@@ -33,6 +35,7 @@ public class ReportServiceImpl implements ReportService {
     private final ReportRepository reportRepository;
     private final PetServiceClient petServiceClient;
     private final UserServiceClient userServiceClient;
+    private final EventBridgePublisher eventBridgePublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -99,7 +102,25 @@ public class ReportServiceImpl implements ReportService {
         if (report.getStatus() == null) {
             report.setStatus(ReportStatus.ACTIVE);
         }
-        return reportRepository.save(report);
+
+        ReportModel savedReport = reportRepository.save(report);
+
+        eventBridgePublisher.publish(ReportEventDTO.builder()
+                .source("com.sanosysalvos.report")
+                .detailType("pet_reported")
+                .detail(ReportEventDTO.Detail.builder()
+                        .reportId(savedReport.getId())
+                        .petId(savedReport.getPetId())
+                        .userId(savedReport.getReporterUserId())
+                        .latitude(savedReport.getLatitude() != null
+                                ? savedReport.getLatitude().doubleValue() : null)
+                        .longitude(savedReport.getLongitude() != null
+                                ? savedReport.getLongitude().doubleValue() : null)
+                        .eventDate(savedReport.getReportedAt())
+                        .build())
+                .build());
+
+        return savedReport;
     }
 
     private void validatePetAndReporterExist(ReportModel report) {
@@ -142,7 +163,7 @@ public class ReportServiceImpl implements ReportService {
         ReportModel report = reportRepository
                 .findById(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("Report no encontrado: " + reportId));
-        ReportApiMapper.applyPatch(report, patch);
+        ReportMapper.applyPatch(report, patch);
         return reportRepository.save(report);
     }
 
@@ -157,12 +178,26 @@ public class ReportServiceImpl implements ReportService {
         }
         report.setStatus(ReportStatus.CLOSED);
         report.setResolvedAt(Instant.now());
-        if (request != null && request.getNota() != null && !request.getNota().isBlank()) {
-            String tag = request.getMotivo() != null ? "[" + request.getMotivo() + "] " : "[Cierre] ";
+        if (request != null && request.getNote() != null && !request.getNote().isBlank()) {
+            String tag = request.getReason() != null ? "[" + request.getReason() + "] " : "[Cierre] ";
             String prev = report.getDescription() != null ? report.getDescription() + "\n" : "";
-            report.setDescription(prev + tag + request.getNota());
+            report.setDescription(prev + tag + request.getNote());
         }
-        return reportRepository.save(report);
+
+        ReportModel savedReport = reportRepository.save(report);
+
+        eventBridgePublisher.publish(ReportEventDTO.builder()
+                .source("com.sanosysalvos.report")
+                .detailType("pet_found")
+                .detail(ReportEventDTO.Detail.builder()
+                        .reportId(savedReport.getId())
+                        .petId(savedReport.getPetId())
+                        .userId(savedReport.getReporterUserId())
+                        .eventDate(savedReport.getReportedAt())
+                        .build())
+                .build());
+
+        return savedReport;
     }
 
     /**(SY-20): enlaces a mascota y reportante, y tipo de reporte. */
